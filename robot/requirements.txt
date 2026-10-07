@@ -1,0 +1,3 @@
+gpiozero>=2,<3
+smbus2>=0.4,<1
+# Install Picamera2 with Raspberry Pi OS apt, not pip; see README.

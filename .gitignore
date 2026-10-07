@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.venv/
+*.pt
+captures/
+robot/config.local.json
