@@ -4,6 +4,20 @@ Separate programs for the **PC operator** (`pc/`) and **Raspberry Pi robot** (`r
 
 The document also contains an earlier documentation-writing conversation. Those requests were treated as reference text, not instructions to write competition documentation. Your current prototype constraints take precedence.
 
+## Get the code onto the Raspberry Pi
+
+Repository: https://github.com/RodutLikesArk/VAMP (private). On the Pi, sign in as an account with access, then clone:
+
+```bash
+sudo apt update
+sudo apt install git gh
+gh auth login --hostname github.com --git-protocol https --web
+gh repo clone RodutLikesArk/VAMP
+cd VAMP
+```
+
+GitHub prints a device code and a browser link; you can complete that sign-in on your PC. Continue with **Raspberry Pi setup** below. To download later code changes, stop the robot program and run `git pull --ff-only` from this directory. Keep your wiring changes in ignored `robot/config.local.json` so updates do not overwrite them.
+
 ## Try it on the PC first
 
 Use Python 3.10 or newer with Tkinter. Run commands from this repository's root directory. On Windows, `py` can replace `python`.
