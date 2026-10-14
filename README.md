@@ -18,7 +18,17 @@ cd VAMP
 
 GitHub prints a device code and a browser link; you can complete that sign-in on your PC. Continue with **Raspberry Pi setup** below. To download later code changes, stop the robot program and run `git pull --ff-only` from this directory. Keep your wiring changes in ignored `robot/config.local.json` so updates do not overwrite them.
 
-## Try it on the PC first
+## Windows desktop app
+
+Download **VAMP-Operator.exe** from [GitHub Releases](https://github.com/RodutLikesArk/VAMP/releases/latest), then double-click it. Python installation and a terminal are not needed on the PC. The dark dashboard includes a live camera view, mobility/front-module selectors, telemetry, servo buttons, and emergency stop.
+
+Open **Connection settings**, enter the Pi address (default `http://192.168.10.2:8765`) and matching token, then choose **Save & restart**. The app remembers these settings in `%APPDATA%\VAMP\operator.json`. Camera captures go to `Pictures\VAMP`. The Pi controller still runs from its terminal as described below.
+
+The portable release includes control and camera viewing. For YOLO inference, use the optional AI build or the Python source version; the small portable release does not bundle PyTorch/Ultralytics. Selecting weights without those dependencies leaves live video available and reports that detection is unavailable.
+
+If using the source version with Python and the PC dependencies already installed, double-click `VAMP.pyw` to launch without a console. Developers can rebuild the standalone app with `tools/build_windows.ps1`; use `-IncludeAI` for a larger build containing the optional detector.
+
+## Developer simulation
 
 Use Python 3.10 or newer with Tkinter. Run commands from this repository's root directory. On Windows, `py` can replace `python`.
 

@@ -7,12 +7,15 @@ import time
 import tkinter as tk
 from datetime import datetime
 from pathlib import Path
-from tkinter import ttk
+from tkinter import messagebox
+
+from .ui import OperatorView
+from .settings import load_settings, data_dir
 
 from .client import Client, jpeg_frames
 
 
-class App:
+class App(OperatorView):
     def __init__(self, root, client, weights=None):
         self.root, self.client = root, client
         self.closed = threading.Event()
@@ -34,50 +37,7 @@ class App:
         self.status = tk.StringVar(value='Connecting...')
         self.video_status = tk.StringVar(value='Camera connecting...')
         self.servo_positions = dict(gimbal=0.0, arm=0.0, gripper=0.0)
-        root.title('V.A.M.P. Operator')
-        root.geometry('1060x820')
-        root.minsize(800, 650)
-        frame = ttk.Frame(root, padding=12)
-        frame.pack(fill='both', expand=True)
-        ttk.Label(frame, text='V.A.M.P. — Versatile Amphibious Modular Platform', font=('Arial', 17, 'bold')).pack(anchor='w')
-        ttk.Label(frame, text=client.url).pack(anchor='w', pady=(0, 8))
-        row = ttk.Frame(frame)
-        row.pack(fill='x')
-        ttk.Label(row, text='Mobility:').pack(side='left')
-        modes = ttk.Combobox(row, textvariable=self.mode, values=['crawler', 'submarine'], state='readonly', width=12)
-        modes.pack(side='left', padx=8)
-        ttk.Label(row, text='Front attachment:').pack(side='left')
-        attachments = ttk.Combobox(row, textvariable=self.attachment, values=['none', 'manipulator', 'scanner', 'led'], state='readonly', width=14)
-        attachments.pack(side='left', padx=8)
-        modes.bind('<<ComboboxSelected>>', lambda e: self.select_modules())
-        attachments.bind('<<ComboboxSelected>>', lambda e: self.select_modules())
-        ttk.Button(row, text='Apply modules', command=self.select_modules).pack(side='left')
-        buttons = ttk.Frame(frame)
-        buttons.pack(fill='x', pady=8)
-        ttk.Button(buttons, text='ARM', command=self.arm).pack(side='left', padx=3)
-        ttk.Button(buttons, text='STOP', command=lambda: self.stop('/api/stop')).pack(side='left', padx=3)
-        tk.Button(buttons, text='EMERGENCY STOP (Esc)', bg='#b91c1c', fg='white', command=lambda: self.stop('/api/estop')).pack(side='left', padx=3)
-        ttk.Button(buttons, text='Reset E-stop', command=lambda: self.stop('/api/reset')).pack(side='left', padx=3)
-        ttk.Checkbutton(buttons, text='Pitch stabilization', variable=self.stabilize).pack(side='left', padx=8)
-        ttk.Checkbutton(buttons, text='Light', variable=self.light).pack(side='left')
-        speed = ttk.Frame(frame)
-        speed.pack(fill='x')
-        ttk.Label(speed, text='Operator speed (fraction of robot max):').pack(side='left')
-        ttk.Scale(speed, from_=0.1, to=1, variable=self.speed).pack(side='left', fill='x', expand=True, padx=10)
-        ttk.Label(frame, text='Hold SPACE to drive · W/S forward/reverse · A/D turn · R/F ascend/descend · T/G pitch\nJ/L camera tilt · U/O arm · I/K gripper · release SPACE to stop propulsion').pack(anchor='w', pady=8)
-        servos = ttk.Frame(frame)
-        servos.pack(fill='x')
-        for name in self.servo_positions:
-            ttk.Label(servos, text=name.title()).pack(side='left', padx=(8, 2))
-            for label, step in [('-', -0.1), ('+', 0.1)]:
-                ttk.Button(servos, text=label, width=3, command=lambda n=name, s=step: self.move_servo(n, s)).pack(side='left')
-        ttk.Button(servos, text='Save camera frame', command=self.capture).pack(side='right')
-        ttk.Label(frame, textvariable=self.status, wraplength=1000).pack(anchor='w', pady=10)
-        self.video_label = ttk.Label(frame, text='Live camera is unavailable in simulation.', anchor='center')
-        self.video_label.pack(fill='both', expand=True)
-        ttk.Label(frame, textvariable=self.video_status, wraplength=1000).pack(anchor='w')
-        self.telemetry = tk.Text(frame, height=6, state='disabled', font=('Consolas', 10))
-        self.telemetry.pack(fill='x', pady=(8, 0))
+        self.build_ui(root)
         root.bind('<KeyPress>', self.press)
         root.bind('<KeyRelease>', self.release)
         root.bind('<FocusOut>', self.focus_out)
@@ -130,6 +90,9 @@ class App:
         key = event.keysym.lower()
         if key == 'escape':
             self.stop('/api/estop')
+            return
+        widget = getattr(event, 'widget', None)
+        if widget and widget.winfo_class() in ('Entry', 'TEntry', 'TCombobox', 'Spinbox'):
             return
         with self.lock:
             new = key not in self.keys
@@ -241,14 +204,16 @@ class App:
         with self.frame_lock:
             image = self.display_frame.copy() if self.display_frame else None
         if image:
-            Path('captures').mkdir(exist_ok=True)
-            path = Path('captures') / (datetime.now().strftime('%Y%m%d_%H%M%S_%f') + '.jpg')
+            folder = Path.home() / 'Pictures' / 'VAMP'
+            folder.mkdir(parents=True, exist_ok=True)
+            path = folder / (datetime.now().strftime('%Y%m%d_%H%M%S_%f') + '.jpg')
             image.save(path)
             self.video_status.set('Saved ' + str(path.resolve()))
 
     def refresh(self):
         if self.closed.is_set():
             return
+        self.speed_label.configure(text='%d%%' % round(self.speed.get() * 100))
         with self.lock:
             keys = set(self.keys)
             enabled = self.allowed and 'space' in keys
@@ -259,6 +224,7 @@ class App:
         while not self.events.empty():
             kind, data = self.events.get_nowait()
             if kind == 'status':
+                self.render_status(data)
                 state = 'E-STOP' if data['estopped'] else ('ARMED' if data['armed'] else 'DISARMED')
                 self.status.set('%s · %s / %s · %s%s' % (state, data['mode'], data['attachment'], data.get('reason') or 'Hold SPACE to drive', ' · SIMULATION' if data['simulate'] else ''))
                 telemetry = data['telemetry']
@@ -271,18 +237,20 @@ class App:
                 self.telemetry.insert('1.0', text)
                 self.telemetry.configure(state='disabled')
             elif kind == 'error':
-                self.status.set('Error: ' + data)
+                self.status.set('Connection: ' + data)
+                self.state_badge.configure(text='●  OFFLINE', fg='#ff657a')
             elif kind == 'video':
                 self.video_status.set(data)
         with self.frame_lock:
             image = self.display_frame.copy() if self.display_frame else None
         if image:
             from PIL import ImageTk
-            image.thumbnail((max(640, self.video_label.winfo_width()), max(200, self.video_label.winfo_height())))
+            image.thumbnail((max(1, self.camera_stage.winfo_width()), max(1, self.camera_stage.winfo_height())))
             self.photo = ImageTk.PhotoImage(image)
             self.video_label.configure(image=self.photo, text='')
+            self.video_label.place(relx=0.5, rely=0.5, anchor='center')
         else:
-            self.video_label.configure(image='', text='No live frame available')
+            self.video_label.place_forget()
         self.root.after(50, self.refresh)
 
     def close(self):
@@ -301,15 +269,26 @@ class App:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--url', default='http://192.168.10.2:8765')
-    parser.add_argument('--token', default='vamp-prototype')
+    parser.add_argument('--url', default=None)
+    parser.add_argument('--token', default=None)
     parser.add_argument('--weights', type=Path, help='Your locally trained defect-model .pt file')
+    parser.add_argument('--smoke-test', action='store_true', help=argparse.SUPPRESS)
     args = parser.parse_args()
-    if args.weights and not args.weights.is_file():
-        parser.error('Weights file does not exist; supply your trained model')
-    root = tk.Tk()
-    App(root, Client(args.url, args.token), args.weights)
-    root.mainloop()
+    while True:
+        settings = load_settings()
+        root = tk.Tk()
+        weights = args.weights or (Path(settings['weights']) if settings['weights'] else None)
+        if weights and not weights.is_file():
+            messagebox.showwarning('V.A.M.P. model', 'Saved model file is unavailable. Live video will run without detection.', parent=root)
+            weights = None
+        app = App(root, Client(args.url or settings['url'], args.token or settings['token']), weights)
+        if args.smoke_test:
+            # Used by packaging verification; a normal double-click never sets this.
+            root.after(1200, app.close)
+        root.mainloop()
+        if not getattr(app, 'restart_settings', False):
+            break
+        args.url, args.token, args.weights = None, None, None
 
 
 if __name__ == '__main__':

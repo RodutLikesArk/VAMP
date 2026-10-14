@@ -45,6 +45,11 @@ class DesktopTest(unittest.TestCase):
             app.arm()
             pump(0.5)
             self.assertTrue(controller.armed)
+            # Typing in connection fields must never become propulsion input.
+            entry = tk.Entry(root)
+            app.press(SimpleNamespace(keysym='w', widget=entry))
+            self.assertNotIn('w', app.keys)
+            entry.destroy()
             app.press(SimpleNamespace(keysym='space'))
             app.press(SimpleNamespace(keysym='w'))
             pump(0.3)
