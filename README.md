@@ -92,6 +92,28 @@ python -m pc.main --url http://192.168.10.2:8765 --token vamp-prototype
 
 The network service uses a bearer token over plain HTTP, intended for this private tether. Run one operator application at a time; multi-operator ownership is not implemented. Camera errors are reported without stopping control. The default stream is 720p/20 fps to reduce load on the Pi; 1920x1080 can be configured, but throughput and latency must be measured on your Pi.
 
+## Start automatically on the Pi
+
+After a successful manual start, press Ctrl+C to stop it. From your repository directory, run the installer **without sudo**; it requests sudo only for system service installation:
+
+```bash
+python3 tools/install_pi_service.py
+systemctl status vamp --no-pager
+```
+
+The installer uses your actual repository path, virtual environment, local configuration, and current Pi username. It enables `vamp.service` at boot and starts it immediately. Hardware mode requires `wiring_confirmed=true`. The controller starts disarmed; ARM is still required in the PC app. For simulation startup instead, run `python3 tools/install_pi_service.py --simulate`. Re-run without that flag to switch back to hardware.
+
+```bash
+journalctl -u vamp -f               # live program logs; Ctrl+C exits log viewing
+sudo systemctl restart vamp        # restart after a code/configuration update
+sudo systemctl stop vamp           # stop for this boot
+sudo systemctl disable --now vamp  # stop and remove automatic boot startup
+```
+
+Do not run a second manual controller while the service is active. For code updates, stop the service, run `git pull --ff-only`, then start it again with `sudo systemctl start vamp`. Failures are retried with a delay and limited to three starts per minute. After correcting a repeated startup failure, run `sudo systemctl reset-failed vamp` followed by `sudo systemctl start vamp`.
+
+Service installation must be performed on the Pi; it cannot be applied to the Pi from the Windows build. The unit uses systemd's [service configuration](https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html) and sends SIGINT on stop to trigger the controller's cleanup.
+
 ## Attachment connectors and motor mapping
 
 You confirmed **all DRV8833 boards are in the main chassis**. The Pi therefore drives DRV8833 input pins; no attachment firmware, UART, CAN, or I2C command protocol is assumed. A six-pin connector has no inherent data protocol.
