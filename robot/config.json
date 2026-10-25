@@ -18,8 +18,10 @@
   "servo_pulse_ms": [1.0, 2.0],
   "servo_release_seconds": 0.3,
   "led_pin": null,
+  "i2c_mux": {"enabled": false, "bus": 1, "address": 112},
   "imu": {"enabled": false, "model": "HW-123 / MPU-6050", "bus": 1, "address": 104, "calibration_samples": 100, "filter_tau_seconds": 0.5, "pitch_sign": 1, "pitch_offset_deg": 0, "roll_sign": 1, "roll_offset_deg": 0, "yaw_sign": 1, "yaw_offset_deg": 0, "kp": 0.015, "ki": 0, "kd": 0.002, "max_correction": 0.2},
   "temperature_device": null,
   "mq2_digital_pin": null,
+  "environment": {"enabled": false, "poll_seconds": 2.0, "aht10": {"enabled": true, "bus": 1, "address": 56, "mux_channel": 1}, "mq2": {"enabled": false, "gpio": 26, "active_low": true, "warmup_seconds": 120}},
   "camera": {"enabled": true, "width": 1280, "height": 720, "fps": 20}
 }

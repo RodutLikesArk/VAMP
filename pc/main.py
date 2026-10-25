@@ -285,6 +285,9 @@ class App(OperatorView):
         self.attitude_panel.lift()
         if time.monotonic()-self.last_status_at > 0.75:
             self.orientation.set_telemetry({})
+            self.sensor_vars['temperature'].set('— °C')
+            self.sensor_vars['humidity'].set('— %RH')
+            self.sensor_vars['gas'].set('NO FRESH DATA')
         self.root.after(50, self.refresh)
 
     def close(self):

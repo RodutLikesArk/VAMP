@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 from http.server import ThreadingHTTPServer
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -22,6 +23,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--exe', type=Path, default=ROOT / 'dist/VAMP-Operator.exe')
     parser.add_argument('--imu-demo', action='store_true', help='Exercise the attitude UI with explicitly simulated sensor data')
+    parser.add_argument('--environment-demo', action='store_true', help='Exercise the environment cards with explicitly simulated readings')
     args = parser.parse_args()
     config = json.loads((ROOT / 'robot/config.json').read_text())
     config['token'] = secrets.token_hex(16)
@@ -38,6 +40,12 @@ def main():
                 if args.imu_demo:
                     hardware.sample_imu()
                     hardware.telemetry.update(roll_deg=15.0,pitch_deg=20.0,yaw_deg=30.0)
+                if args.environment_demo:
+                    hardware.last_environment_sample=time.monotonic()
+                    hardware.last_gas_sample=time.monotonic()
+                    hardware.telemetry.update(temperature_c=24.5,environment_temperature_c=24.5,
+                                              humidity_percent=48.2,environment_valid=True,
+                                              gas_alarm_raw=False,gas_triggered=True,gas_warming_up=False)
                 requests.append(self.path)
             super().do_GET()
 

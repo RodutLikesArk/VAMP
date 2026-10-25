@@ -24,7 +24,7 @@ try {
     }
     & $taskBuildPython -m PyInstaller @taskBuildArgs
     if ($LASTEXITCODE -ne 0) { throw 'Application build failed' }
-    & $taskBuildPython tools/check_windows_connection.py --imu-demo
+    & $taskBuildPython tools/check_windows_connection.py --imu-demo --environment-demo
     if ($LASTEXITCODE -ne 0) { throw 'Packaged application failed connection check' }
     Write-Output 'Built dist\VAMP-Operator.exe'
 } finally {

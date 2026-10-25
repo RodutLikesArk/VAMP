@@ -4,9 +4,34 @@ import math
 import time
 from pathlib import Path
 from .imu import MPU6050
+from .i2c import I2CRouter
+from .environment import AHT10, mq2_state
 
 
 def validate_config(c):
+    mux = c.get('i2c_mux',{})
+    env = c.get('environment',{})
+    aht = env.get('aht10',{})
+    mq = env.get('mq2',{})
+    env_enabled = env.get('enabled',False)
+    for flag in (mux.get('enabled',False),env_enabled,aht.get('enabled',False),mq.get('enabled',False),mq.get('active_low',True)):
+        if type(flag) is not bool:
+            raise ValueError('Sensor enable/active_low flags must be booleans')
+    if not 0x70 <= mux.get('address',0x70) <= 0x77:
+        raise ValueError('TCA9548A address must be 0x70..0x77')
+    if aht.get('address',0x38) != 0x38:
+        raise ValueError('This AHT10 driver uses address 0x38')
+    for name,value,minimum in [('environment interval',env.get('poll_seconds',2.0),2),('MQ-2 startup delay',mq.get('warmup_seconds',120),0)]:
+        if type(value) not in (int,float) or not math.isfinite(value) or value < minimum:
+            raise ValueError('Invalid '+name)
+    routes = [(c['imu'].get('bus',1),c['imu'].get('mux_channel'),c['imu']['enabled'])]
+    routes += [(aht.get('bus',1),aht.get('mux_channel'),env_enabled and aht.get('enabled',False))]
+    for bus,channel,enabled in routes:
+        if enabled and channel is not None:
+            if not mux.get('enabled') or type(channel) is not int or not 0 <= channel <= 7 or bus != mux.get('bus',1):
+                raise ValueError('Sensor mux routes require enabled TCA9548A, matching bus and channel 0..7')
+    if all(route[2] for route in routes) and routes[0][:2] == routes[1][:2]:
+        raise ValueError('Keep AHT10 on its own multiplexer channel')
     imu = c['imu']
     if type(imu.get('enabled')) is not bool:
         raise ValueError('imu.enabled must be true or false')
@@ -29,10 +54,14 @@ def validate_config(c):
         raise ValueError('Every motor needs two driver input pins')
     pins += list(c['servos'].values())
     pins += [c[k] for k in ('led_pin', 'mq2_digital_pin') if c.get(k) is not None]
+    if env_enabled and mq.get('enabled',False):
+        if c.get('mq2_digital_pin') is not None:
+            raise ValueError('Use environment.mq2 or legacy mq2_digital_pin, not both')
+        pins.append(mq.get('gpio',26))
     if len(pins) != len(set(pins)) or any(type(p) is not int or not 0 <= p <= 27 for p in pins):
         raise ValueError('GPIO pins must be unique BCM integers in 0..27')
-    if c['imu']['enabled'] and (2 in pins or 3 in pins):
-        raise ValueError('GPIO 2/3 are reserved for the enabled I2C IMU')
+    if (c['imu']['enabled'] or mux.get('enabled') or (env_enabled and aht.get('enabled'))) and (2 in pins or 3 in pins):
+        raise ValueError('GPIO 2/3 are reserved for enabled I2C devices')
     if 4 in pins and c.get('temperature_device'):
         raise ValueError('GPIO 4 is reserved for the default 1-wire bus')
     for name, profile in c['profiles'].items():
@@ -62,11 +91,22 @@ class Hardware:
         self.imu = None
         self.next_imu_retry = 0.0
         self.aux_error = None
+        self.i2c = I2CRouter(config.get('i2c_mux'))
+        self.aht = None
+        self.next_environment_sample = 0.0
+        self.last_environment_sample = None
+        self.environment_error = None
+        self.gas_started = time.monotonic()
+        self.last_gas_sample = None
+        self.gas_error = None
         self.telemetry = {'pitch_deg': None, 'roll_deg': None, 'yaw_deg': None,
                           'orientation_valid': False, 'imu_calibrating': False,
                           'imu_calibration_progress': 0.0, 'imu_error': None,
                           'imu_temperature_c': None, 'temperature_c': None,
-                          'gas_alarm_raw': None, 'sensor_error': None}
+                          'gas_alarm_raw': None, 'sensor_error': None,
+                          'humidity_percent':None,'environment_temperature_c':None,
+                          'environment_valid':False,'environment_error':None,
+                          'gas_triggered':None,'gas_warming_up':False,'gas_warmup_remaining_s':0}
         if simulate:
             return
         if not config['wiring_confirmed']:
@@ -80,7 +120,12 @@ class Hardware:
                 self.servos[name] = Servo(pin, initial_value=None, min_pulse_width=low / 1000, max_pulse_width=high / 1000)
             if config.get('led_pin') is not None:
                 self.led = LED(config['led_pin'])
-            if config.get('mq2_digital_pin') is not None:
+            mq = config.get('environment',{}).get('mq2',{})
+            if config.get('environment',{}).get('enabled') and mq.get('enabled'):
+                # External voltage divider provides the pull-down; internal
+                # pulls would alter its ratio. active_state=True keeps raw HIGH.
+                self.gas = DigitalInputDevice(mq.get('gpio',26),pull_up=None,active_state=True)
+            elif config.get('mq2_digital_pin') is not None:
                 self.gas = DigitalInputDevice(config['mq2_digital_pin'], pull_up=False)
             # IMU initialization happens in its own reader thread. A missing
             # optional module must not prevent manual robot control from booting.
@@ -132,8 +177,7 @@ class Hardware:
             return
         try:
             if self.bus is None:
-                from smbus2 import SMBus
-                self.bus = SMBus(self.config['imu']['bus'])
+                self.bus = self.i2c.route(self.config['imu']['bus'],self.config['imu'].get('mux_channel'))
             if self.imu is None:
                 self.imu = MPU6050(self.bus, self.config['imu'])
             reading = self.imu.read()
@@ -169,17 +213,67 @@ class Hardware:
                 self.telemetry['temperature_c'] = int(text.split('t=')[1]) / 1000
             except Exception as exc:
                 errors.append('Temperature: ' + str(exc))
-        self.telemetry['gas_alarm_raw'] = bool(self.gas.value) if self.gas else None
+        env = self.config.get('environment',{})
+        if env.get('enabled'):
+            if env.get('aht10',{}).get('enabled'):
+                self.sample_environment()
+                self.telemetry['temperature_c'] = self.telemetry['environment_temperature_c']
+            mq = env.get('mq2',{})
+            if mq.get('enabled') and self.gas is not None:
+                try:
+                    self.telemetry.update(mq2_state(self.gas.value,mq.get('active_low',True),
+                                                   time.monotonic()-self.gas_started,mq.get('warmup_seconds',120)))
+                    self.last_gas_sample = time.monotonic()
+                    self.gas_error = None
+                except Exception as exc:
+                    self.telemetry.update(gas_alarm_raw=None,gas_triggered=None,gas_warming_up=False)
+                    self.gas_error = 'MQ-2: '+str(exc)
+        elif self.gas is not None:
+            self.telemetry['gas_alarm_raw'] = bool(self.gas.value)
+            self.last_gas_sample = time.monotonic()
         self.aux_error = '; '.join(errors) or None
+
+    def sample_environment(self):
+        if time.monotonic() < self.next_environment_sample:
+            return
+        settings = self.config['environment'].get('aht10',{})
+        try:
+            if self.aht is None:
+                bus = self.i2c.route(settings.get('bus',1),settings.get('mux_channel'))
+                self.aht = AHT10(bus,settings.get('address',0x38))
+            reading = self.aht.read()
+            if self.last_environment_sample is None:
+                self.gas_started = time.monotonic()
+            self.telemetry.update(environment_temperature_c=reading['temperature_c'],
+                                  humidity_percent=reading['humidity_percent'],environment_valid=True)
+            self.last_environment_sample = time.monotonic()
+            self.environment_error = None
+        except Exception as exc:
+            self.telemetry.update(environment_temperature_c=None,humidity_percent=None,environment_valid=False)
+            self.last_environment_sample = None
+            self.environment_error = 'AHT10: '+str(exc)
+            self.aht = None
+        self.next_environment_sample = time.monotonic()+self.config['environment'].get('poll_seconds',2.0)
 
     def telemetry_snapshot(self):
         result = dict(self.telemetry)
         result['imu_enabled'] = self.config['imu']['enabled']
         age = None if self.last_imu_sample is None else time.monotonic()-self.last_imu_sample
         result['imu_age_s'] = age
+        env = self.config.get('environment',{})
+        result['environment_enabled'] = env.get('enabled',False)
+        result['environment_error'] = self.environment_error
+        result['gas_error'] = self.gas_error
+        if self.last_gas_sample is None or time.monotonic()-self.last_gas_sample > 3:
+            result.update(gas_alarm_raw=None,gas_triggered=None,gas_warming_up=False)
+        result['environment_age_s'] = None if self.last_environment_sample is None else time.monotonic()-self.last_environment_sample
+        if result['environment_age_s'] is None or result['environment_age_s'] > max(5,env.get('poll_seconds',2)*2.5):
+            result.update(environment_temperature_c=None,humidity_percent=None,environment_valid=False)
+            if env.get('enabled') and env.get('aht10',{}).get('enabled'):
+                result['temperature_c'] = None
         if age is None or age > 0.5:
             result.update(pitch_deg=None, roll_deg=None, yaw_deg=None, orientation_valid=False)
-        result['sensor_error'] = '; '.join(e for e in (result.get('imu_error'), self.aux_error) if e) or None
+        result['sensor_error'] = '; '.join(e for e in (result.get('imu_error'),self.environment_error,self.gas_error,self.aux_error) if e) or None
         return result
 
     def stop(self):
@@ -193,6 +287,6 @@ class Hardware:
         for servo in self.servos.values():
             servo.detach()
             servo.close()
-        for device in (self.led, self.gas, self.bus):
+        for device in (self.led,self.gas,self.bus,self.i2c):
             if device is not None:
                 device.close()

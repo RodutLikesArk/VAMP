@@ -173,11 +173,19 @@ Pitch/roll use a complementary filter with gyro-bias calibration and gravity cor
 
 References: [HW-123 manufacturer description](https://www.szhwmake.com/prod_view.aspx?FId=t3%3A95%3A3&Id=322&TypeId=95), [TDK MPU-6050 register map](https://invensense.tdk.com/wp-content/uploads/2015/02/MPU-6000-Register-Map.pdf).
 
+## Environment sensing module
+
+TCA9548A routing, AHT10 air temperature/humidity, and MQ-2 digital comparator readings are supported. The Windows dashboard includes humidity, comparator startup suppression, and triggered/not-triggered states. [Complete BCM GPIO wiring and setup](docs/environment-wiring.md) includes the six-pin front connector assignment and 5 V-to-3.3 V MQ-2 divider.
+
+Default wiring: GPIO2 SDA / GPIO3 SCL to the mux; HW-123 on mux channel 0; AHT10 on channel 1; MQ-2 D0 through voltage reduction to GPIO26. VCC/GND connect to the rails described in the guide. The mux is not an ADC: MQ-2 A0 remains unused without an ADC, and no ppm or atmosphere-safety result is inferred.
+
+After physically wiring the sensors, stop vamp, update the Pi source, and run `.venv/bin/python tools/configure_environment.py --enable --mq2-gpio 26`, then restart vamp. This also changes the IMU route to mux channel 0; move its SDA/SCL wires accordingly. The helper preserves motor wiring and calibration. Sensors remain disabled in the supplied default configuration until explicitly enabled.
+
 ## Sensors and stabilization
 
 - **HW-123 / MPU6050:** see the orientation-display instructions above. The optional PID still controls zero pitch only, requires direction checks/tuning, and stays disabled until selected in the GUI. There is no depth hold, because no depth/pressure sensor is specified.
 - **DS18B20:** set `temperature_device` to the exact `28-...` device ID or `auto` for the first detected sensor. Reports temperature only; DS18B20 does not measure humidity.
-- **MQ-2:** set `mq2_digital_pin` to a mapped free BCM pin after confirming input voltage. Reports the raw comparator state only. Analog readings require an ADC, which was not specified. No gas concentration, gas identity, or assessment of atmosphere safety is inferred from the digital signal.
+- **MQ-2:** use the environment-module helper/guide above. `mq2_digital_pin` remains available for the older raw-digital configuration, but cannot be enabled alongside the new MQ-2 configuration. Analog readings still require an ADC.
 - **LED:** set `led_pin` for a suitable output circuit. The GUI light checkbox controls it. RGB/message patterns are not implemented because the LED hardware and messages are unspecified.
 
 ## Optional PC defect detection

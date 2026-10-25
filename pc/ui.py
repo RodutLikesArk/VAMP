@@ -129,14 +129,14 @@ class OperatorView:
         sensors = tk.Frame(outer, bg=BG)
         sensors.pack(fill='x', pady=(16, 10))
         self.sensor_vars = {}
-        for column, (name, title, initial) in enumerate([('pitch', 'PITCH', '— °'), ('temperature', 'TEMPERATURE', '— °C'), ('gas', 'MQ-2 DIGITAL', 'NO SENSOR'), ('servo', 'ACTIVE SERVO', 'IDLE')]):
+        for column, (name, title, initial) in enumerate([('pitch', 'PITCH', '— °'), ('temperature', 'AIR TEMPERATURE', '— °C'), ('humidity', 'HUMIDITY', '— %RH'), ('gas', 'MQ-2 THRESHOLD', 'NO SENSOR'), ('servo', 'ACTIVE SERVO', 'IDLE')]):
             sensors.grid_columnconfigure(column, weight=1, uniform='sensors')
             card = self.panel(sensors)
-            card.grid(row=0, column=column, sticky='ew', padx=(0 if column == 0 else 6, 0 if column == 3 else 6))
+            card.grid(row=0, column=column, sticky='ew', padx=(0 if column == 0 else 6, 0 if column == 4 else 6))
             self.caption(card, title, muted=True).pack(anchor='w', padx=14, pady=(12, 4))
             value = tk.StringVar(value=initial)
             self.sensor_vars[name] = value
-            tk.Label(card, textvariable=value, bg=PANEL, fg=BLUE if name == 'pitch' else TEXT, font=('Consolas', 17, 'bold')).pack(anchor='w', padx=14, pady=(0, 12))
+            tk.Label(card, textvariable=value, bg=PANEL, fg=BLUE if name == 'pitch' else TEXT, font=('Consolas', 12 if name == 'gas' else 17, 'bold')).pack(anchor='w', padx=14, pady=(0, 12))
         bottom = self.panel(outer)
         bottom.pack(fill='x')
         self.telemetry = tk.Text(bottom, height=2, state='disabled', bg=PANEL, fg=MUTED, insertbackground=TEXT, borderwidth=0, highlightthickness=0, font=('Consolas', 9), padx=14, pady=8)
@@ -186,7 +186,17 @@ class OperatorView:
         self.orientation.set_telemetry(telemetry, data['simulate'])
         self.sensor_vars['pitch'].set('— °' if telemetry['pitch_deg'] is None else '%.1f °' % telemetry['pitch_deg'])
         self.sensor_vars['temperature'].set('— °C' if telemetry['temperature_c'] is None else '%.1f °C' % telemetry['temperature_c'])
-        self.sensor_vars['gas'].set('NO SENSOR' if telemetry['gas_alarm_raw'] is None else ('HIGH' if telemetry['gas_alarm_raw'] else 'LOW'))
+        humidity = telemetry.get('humidity_percent')
+        self.sensor_vars['humidity'].set('— %RH' if humidity is None else '%.1f %%RH' % humidity)
+        if telemetry.get('gas_warming_up'):
+            gas = 'STARTUP %ds' % telemetry.get('gas_warmup_remaining_s',0)
+        elif telemetry.get('gas_triggered') is True:
+            gas = 'TRIGGERED'
+        elif telemetry.get('gas_triggered') is False:
+            gas = 'NOT TRIGGERED'
+        else:
+            gas = 'NO SENSOR' if telemetry['gas_alarm_raw'] is None else ('D0 HIGH' if telemetry['gas_alarm_raw'] else 'D0 LOW')
+        self.sensor_vars['gas'].set(gas)
         self.sensor_vars['servo'].set((data['active_servo'] or 'idle').upper())
 
     def connection_settings(self):
