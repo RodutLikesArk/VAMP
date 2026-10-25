@@ -137,6 +137,8 @@ The example servo GPIOs are gimbal 17, arm 27, gripper 18. Optional LED, MQ-2 di
 
 ## HW-123 orientation display
 
+The [submarine and gimbal wiring diagram](docs/submarine-minimum-wiring.md) includes the camera servo: signal on BCM GPIO17, power from the regulated 5 V BEC, and common ground. Optional manipulator defaults remain GPIO27 (arm) and GPIO18 (gripper).
+
 HW-123 is an MPU-6050 six-axis accelerometer/gyroscope board. The Pi reader supports that chip over I2C, and the Windows app shows a small rotating 3D submarine over the lower-right corner of the camera view. It includes pitch, roll and **relative** yaw; there is no magnetometer or absolute compass heading. Double-click the visual to zero its displayed heading only. This does not change the controller's sensor reference or PID.
 
 With all power off, connect the module as follows (read your board's labels; physical pin order can vary):

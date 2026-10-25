@@ -1,0 +1,193 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="1850" viewBox="0 0 2000 1850">
+<rect width="2000" height="1850" fill="#fff"/>
+<style>text {font-family:Arial,sans-serif;fill:#172635} .muted {fill:#50657a}</style>
+<text x="70" y="70" font-size="38" text-anchor="start" font-weight="bold">V.A.M.P.  |  Submarine + servo wiring</text>
+<text x="70" y="110" font-size="23" text-anchor="start">Four N20 motors • Two DRV8833 boards • One camera/gimbal servo • BCM GPIO numbering</text>
+<rect x="70" y="145" width="300" height="130" rx="10" fill="#f6f9fc" stroke="#a5b6c6" stroke-width="2"/>
+<text x="95" y="185" font-size="26" text-anchor="start" font-weight="bold">3S LiPo battery</text>
+<text x="95" y="219" font-size="22" text-anchor="start">11.1 V nominal</text>
+<text x="95" y="250" font-size="22" text-anchor="start">12.6 V fully charged</text>
+<rect x="500" y="145" width="320" height="130" rx="10" fill="#f6f9fc" stroke="#a5b6c6" stroke-width="2"/>
+<text x="525" y="185" font-size="26" text-anchor="start" font-weight="bold">Existing BEC</text>
+<text x="525" y="220" font-size="22" text-anchor="start">3S input → regulated 5 V</text>
+<text x="525" y="251" font-size="22" text-anchor="start">Listed output rating: 3 A</text>
+<polyline points="370,200 500,200" fill="none" stroke="#cb3148" stroke-width="4"/>
+<polyline points="370,250 500,250" fill="none" stroke="#334155" stroke-width="4"/>
+<text x="385" y="188" font-size="23" text-anchor="start" style="fill:#cb3148">+</text>
+<text x="385" y="241" font-size="23" text-anchor="start" style="fill:#334155">−</text>
+<polyline points="820,200 1920,200" fill="none" stroke="#cb3148" stroke-width="4"/>
+<text x="865" y="180" font-size="23" text-anchor="start" style="fill:#cb3148" font-weight="bold">+5V net: Pi 5V input + servo V+ + DRV1/DRV2 VM (5 V option)</text>
+<polyline points="820,250 1920,250" fill="none" stroke="#334155" stroke-width="4"/>
+<text x="865" y="285" font-size="22" text-anchor="start" style="fill:#334155">Common GND: battery − / BEC − / Pi / servo / both drivers</text>
+<text x="70" y="325" font-size="21" text-anchor="start">Matching net labels are connected. GPIO numbers are BCM; +5V, 3V3 and GND denote power rails, not GPIO numbers.</text>
+<rect x="65" y="355" width="1225" height="800" rx="10" fill="#fbfdff" stroke="#8fa5b7" stroke-width="2" stroke-dasharray="10 7"/>
+<text x="85" y="388" font-size="22" text-anchor="start" font-weight="bold">MAIN CHASSIS  •  Pi + drivers remain inside</text>
+<rect x="1320" y="355" width="615" height="800" rx="10" fill="#fbfffd" stroke="#8fb7a9" stroke-width="2" stroke-dasharray="10 7"/>
+<text x="1340" y="388" font-size="22" text-anchor="start" font-weight="bold">DETACHABLE SUBMARINE MODULE</text>
+<rect x="100" y="445" width="420" height="700" rx="10" fill="#eef6fc" stroke="#a5b6c6" stroke-width="2"/>
+<text x="125" y="480" font-size="27" text-anchor="start" font-weight="bold">Raspberry Pi 3</text>
+<text x="125" y="518" font-size="21" text-anchor="start">BCM GPIO • 3.3 V logic</text>
+<text x="125" y="815" font-size="21" text-anchor="start" font-weight="bold">Ethernet tether to operator PC</text>
+<text x="125" y="849" font-size="19" text-anchor="start" style="fill:#50657a">Built-in port or USB Ethernet adapter</text>
+<polyline points="175,415 175,445" fill="none" stroke="#cb3148" stroke-width="3"/>
+<text x="175" y="408" font-size="21" text-anchor="middle" style="fill:#cb3148" font-weight="bold">+5V</text>
+<text x="175" y="551" font-size="19" text-anchor="middle" style="fill:#cb3148">power in</text>
+<polyline points="305,415 305,445" fill="none" stroke="#334155" stroke-width="3"/>
+<text x="305" y="408" font-size="21" text-anchor="middle" style="fill:#334155" font-weight="bold">GND</text>
+<text x="305" y="551" font-size="19" text-anchor="middle" style="fill:#334155">ground</text>
+<polyline points="435,415 435,445" fill="none" stroke="#1679b6" stroke-width="3"/>
+<text x="435" y="408" font-size="21" text-anchor="middle" style="fill:#1679b6" font-weight="bold">3V3</text>
+<text x="435" y="551" font-size="19" text-anchor="middle" style="fill:#1679b6">3V3 rail</text>
+<text x="125" y="775" font-size="22" text-anchor="start" style="fill:#1679b6" font-weight="bold">GPIO 17 → SERVO_PWM</text>
+<polyline points="520,768 700,768" fill="none" stroke="#1679b6" stroke-width="3"/>
+<circle cx="520" cy="768" r="4" fill="white" stroke="#1679b6" stroke-width="2"/>
+<text x="600" y="758" font-size="18" text-anchor="start" style="fill:#1679b6">SERVO_PWM</text>
+<rect x="820" y="460" width="360" height="300" rx="10" fill="#f0faf6" stroke="#90b9aa" stroke-width="2"/>
+<text x="1000" y="498" font-size="24" text-anchor="middle" font-weight="bold">DRV1 · DRV8833</text>
+<polyline points="875,435 875,460" fill="none" stroke="#cb3148" stroke-width="3"/>
+<text x="875" y="426" font-size="21" text-anchor="middle" style="fill:#cb3148" font-weight="bold">+5V</text>
+<text x="875" y="531" font-size="18" text-anchor="middle" style="fill:#cb3148">VM</text>
+<polyline points="1000,435 1000,460" fill="none" stroke="#334155" stroke-width="3"/>
+<text x="1000" y="426" font-size="21" text-anchor="middle" style="fill:#334155" font-weight="bold">GND</text>
+<text x="1000" y="531" font-size="18" text-anchor="middle" style="fill:#334155">GND</text>
+<polyline points="1125,435 1125,460" fill="none" stroke="#1679b6" stroke-width="3"/>
+<text x="1125" y="426" font-size="21" text-anchor="middle" style="fill:#1679b6" font-weight="bold">3V3*</text>
+<text x="1125" y="531" font-size="18" text-anchor="middle" style="fill:#1679b6">STBY</text>
+<text x="125" y="587" font-size="22" text-anchor="start" style="fill:#1679b6">GPIO 5</text>
+<polyline points="520,580 820,580" fill="none" stroke="#1679b6" stroke-width="3"/>
+<circle cx="520" cy="580" r="4" fill="white" stroke="#1679b6" stroke-width="2"/>
+<text x="840" y="587" font-size="21" text-anchor="start" style="fill:#1679b6">AIN1</text>
+<text x="1160" y="587" font-size="21" text-anchor="end" style="fill:#23836b">AO1</text>
+<polyline points="1180,580 1640,580" fill="none" stroke="#23836b" stroke-width="3"/>
+<circle cx="1400" cy="580" r="6" fill="white" stroke="#23836b" stroke-width="2"/>
+<text x="1420" y="571" font-size="18" text-anchor="start" style="fill:#23836b">1</text>
+<text x="125" y="627" font-size="22" text-anchor="start" style="fill:#1679b6">GPIO 6</text>
+<polyline points="520,620 820,620" fill="none" stroke="#1679b6" stroke-width="3"/>
+<circle cx="520" cy="620" r="4" fill="white" stroke="#1679b6" stroke-width="2"/>
+<text x="840" y="627" font-size="21" text-anchor="start" style="fill:#1679b6">AIN2</text>
+<text x="1160" y="627" font-size="21" text-anchor="end" style="fill:#23836b">AO2</text>
+<polyline points="1180,620 1640,620" fill="none" stroke="#23836b" stroke-width="3"/>
+<circle cx="1400" cy="620" r="6" fill="white" stroke="#23836b" stroke-width="2"/>
+<text x="1420" y="611" font-size="18" text-anchor="start" style="fill:#23836b">2</text>
+<text x="125" y="687" font-size="22" text-anchor="start" style="fill:#1679b6">GPIO 12</text>
+<polyline points="520,680 820,680" fill="none" stroke="#1679b6" stroke-width="3"/>
+<circle cx="520" cy="680" r="4" fill="white" stroke="#1679b6" stroke-width="2"/>
+<text x="840" y="687" font-size="21" text-anchor="start" style="fill:#1679b6">BIN1</text>
+<text x="1160" y="687" font-size="21" text-anchor="end" style="fill:#23836b">BO1</text>
+<polyline points="1180,680 1640,680" fill="none" stroke="#23836b" stroke-width="3"/>
+<circle cx="1400" cy="680" r="6" fill="white" stroke="#23836b" stroke-width="2"/>
+<text x="1420" y="671" font-size="18" text-anchor="start" style="fill:#23836b">3</text>
+<text x="125" y="727" font-size="22" text-anchor="start" style="fill:#1679b6">GPIO 13</text>
+<polyline points="520,720 820,720" fill="none" stroke="#1679b6" stroke-width="3"/>
+<circle cx="520" cy="720" r="4" fill="white" stroke="#1679b6" stroke-width="2"/>
+<text x="840" y="727" font-size="21" text-anchor="start" style="fill:#1679b6">BIN2</text>
+<text x="1160" y="727" font-size="21" text-anchor="end" style="fill:#23836b">BO2</text>
+<polyline points="1180,720 1640,720" fill="none" stroke="#23836b" stroke-width="3"/>
+<circle cx="1400" cy="720" r="6" fill="white" stroke="#23836b" stroke-width="2"/>
+<text x="1420" y="711" font-size="18" text-anchor="start" style="fill:#23836b">4</text>
+<text x="600" y="556" font-size="20" text-anchor="start" style="fill:#1679b6" font-weight="bold">LEFT SIDE</text>
+<rect x="1378" y="562" width="34" height="176" rx="8" fill="none" stroke="#23836b" stroke-width="2"/>
+<text x="1475" y="546" font-size="20" text-anchor="start" style="fill:#23836b" font-weight="bold">6-pin plug</text>
+<text x="1475" y="572" font-size="18" text-anchor="start" style="fill:#23836b">5, 6: unused</text>
+<polyline points="1640,580 1670,580 1670,570.0" fill="none" stroke="#23836b" stroke-width="3"/>
+<polyline points="1640,620 1670,620 1670,630.0" fill="none" stroke="#23836b" stroke-width="3"/>
+<circle cx="1670" cy="600.0" r="30" fill="white" stroke="#23836b" stroke-width="2"/>
+<text x="1670" y="608.0" font-size="25" text-anchor="middle" style="fill:#23836b" font-weight="bold">M</text>
+<text x="1720" y="598.0" font-size="23" text-anchor="start" font-weight="bold">Rear left</text>
+<text x="1720" y="628.0" font-size="20" text-anchor="start">N20 · left1</text>
+<polyline points="1640,680 1670,680 1670,670.0" fill="none" stroke="#23836b" stroke-width="3"/>
+<polyline points="1640,720 1670,720 1670,730.0" fill="none" stroke="#23836b" stroke-width="3"/>
+<circle cx="1670" cy="700.0" r="30" fill="white" stroke="#23836b" stroke-width="2"/>
+<text x="1670" y="708.0" font-size="25" text-anchor="middle" style="fill:#23836b" font-weight="bold">M</text>
+<text x="1720" y="698.0" font-size="23" text-anchor="start" font-weight="bold">Vertical front</text>
+<text x="1720" y="728.0" font-size="20" text-anchor="start">N20 · left2</text>
+<rect x="820" y="850" width="360" height="300" rx="10" fill="#f0faf6" stroke="#90b9aa" stroke-width="2"/>
+<text x="1000" y="888" font-size="24" text-anchor="middle" font-weight="bold">DRV2 · DRV8833</text>
+<polyline points="875,825 875,850" fill="none" stroke="#cb3148" stroke-width="3"/>
+<text x="875" y="816" font-size="21" text-anchor="middle" style="fill:#cb3148" font-weight="bold">+5V</text>
+<text x="875" y="921" font-size="18" text-anchor="middle" style="fill:#cb3148">VM</text>
+<polyline points="1000,825 1000,850" fill="none" stroke="#334155" stroke-width="3"/>
+<text x="1000" y="816" font-size="21" text-anchor="middle" style="fill:#334155" font-weight="bold">GND</text>
+<text x="1000" y="921" font-size="18" text-anchor="middle" style="fill:#334155">GND</text>
+<polyline points="1125,825 1125,850" fill="none" stroke="#1679b6" stroke-width="3"/>
+<text x="1125" y="816" font-size="21" text-anchor="middle" style="fill:#1679b6" font-weight="bold">3V3*</text>
+<text x="1125" y="921" font-size="18" text-anchor="middle" style="fill:#1679b6">STBY</text>
+<text x="125" y="977" font-size="22" text-anchor="start" style="fill:#1679b6">GPIO 20</text>
+<polyline points="520,970 820,970" fill="none" stroke="#1679b6" stroke-width="3"/>
+<circle cx="520" cy="970" r="4" fill="white" stroke="#1679b6" stroke-width="2"/>
+<text x="840" y="977" font-size="21" text-anchor="start" style="fill:#1679b6">AIN1</text>
+<text x="1160" y="977" font-size="21" text-anchor="end" style="fill:#23836b">AO1</text>
+<polyline points="1180,970 1640,970" fill="none" stroke="#23836b" stroke-width="3"/>
+<circle cx="1400" cy="970" r="6" fill="white" stroke="#23836b" stroke-width="2"/>
+<text x="1420" y="961" font-size="18" text-anchor="start" style="fill:#23836b">1</text>
+<text x="125" y="1017" font-size="22" text-anchor="start" style="fill:#1679b6">GPIO 21</text>
+<polyline points="520,1010 820,1010" fill="none" stroke="#1679b6" stroke-width="3"/>
+<circle cx="520" cy="1010" r="4" fill="white" stroke="#1679b6" stroke-width="2"/>
+<text x="840" y="1017" font-size="21" text-anchor="start" style="fill:#1679b6">AIN2</text>
+<text x="1160" y="1017" font-size="21" text-anchor="end" style="fill:#23836b">AO2</text>
+<polyline points="1180,1010 1640,1010" fill="none" stroke="#23836b" stroke-width="3"/>
+<circle cx="1400" cy="1010" r="6" fill="white" stroke="#23836b" stroke-width="2"/>
+<text x="1420" y="1001" font-size="18" text-anchor="start" style="fill:#23836b">2</text>
+<text x="125" y="1077" font-size="22" text-anchor="start" style="fill:#1679b6">GPIO 22</text>
+<polyline points="520,1070 820,1070" fill="none" stroke="#1679b6" stroke-width="3"/>
+<circle cx="520" cy="1070" r="4" fill="white" stroke="#1679b6" stroke-width="2"/>
+<text x="840" y="1077" font-size="21" text-anchor="start" style="fill:#1679b6">BIN1</text>
+<text x="1160" y="1077" font-size="21" text-anchor="end" style="fill:#23836b">BO1</text>
+<polyline points="1180,1070 1640,1070" fill="none" stroke="#23836b" stroke-width="3"/>
+<circle cx="1400" cy="1070" r="6" fill="white" stroke="#23836b" stroke-width="2"/>
+<text x="1420" y="1061" font-size="18" text-anchor="start" style="fill:#23836b">3</text>
+<text x="125" y="1117" font-size="22" text-anchor="start" style="fill:#1679b6">GPIO 23</text>
+<polyline points="520,1110 820,1110" fill="none" stroke="#1679b6" stroke-width="3"/>
+<circle cx="520" cy="1110" r="4" fill="white" stroke="#1679b6" stroke-width="2"/>
+<text x="840" y="1117" font-size="21" text-anchor="start" style="fill:#1679b6">BIN2</text>
+<text x="1160" y="1117" font-size="21" text-anchor="end" style="fill:#23836b">BO2</text>
+<polyline points="1180,1110 1640,1110" fill="none" stroke="#23836b" stroke-width="3"/>
+<circle cx="1400" cy="1110" r="6" fill="white" stroke="#23836b" stroke-width="2"/>
+<text x="1420" y="1101" font-size="18" text-anchor="start" style="fill:#23836b">4</text>
+<text x="600" y="946" font-size="20" text-anchor="start" style="fill:#1679b6" font-weight="bold">RIGHT SIDE</text>
+<rect x="1378" y="952" width="34" height="176" rx="8" fill="none" stroke="#23836b" stroke-width="2"/>
+<text x="1475" y="936" font-size="20" text-anchor="start" style="fill:#23836b" font-weight="bold">6-pin plug</text>
+<text x="1475" y="962" font-size="18" text-anchor="start" style="fill:#23836b">5, 6: unused</text>
+<polyline points="1640,970 1670,970 1670,960.0" fill="none" stroke="#23836b" stroke-width="3"/>
+<polyline points="1640,1010 1670,1010 1670,1020.0" fill="none" stroke="#23836b" stroke-width="3"/>
+<circle cx="1670" cy="990.0" r="30" fill="white" stroke="#23836b" stroke-width="2"/>
+<text x="1670" y="998.0" font-size="25" text-anchor="middle" style="fill:#23836b" font-weight="bold">M</text>
+<text x="1720" y="988.0" font-size="23" text-anchor="start" font-weight="bold">Rear right</text>
+<text x="1720" y="1018.0" font-size="20" text-anchor="start">N20 · right1</text>
+<polyline points="1640,1070 1670,1070 1670,1060.0" fill="none" stroke="#23836b" stroke-width="3"/>
+<polyline points="1640,1110 1670,1110 1670,1120.0" fill="none" stroke="#23836b" stroke-width="3"/>
+<circle cx="1670" cy="1090.0" r="30" fill="white" stroke="#23836b" stroke-width="2"/>
+<text x="1670" y="1098.0" font-size="25" text-anchor="middle" style="fill:#23836b" font-weight="bold">M</text>
+<text x="1720" y="1088.0" font-size="23" text-anchor="start" font-weight="bold">Vertical rear</text>
+<text x="1720" y="1118.0" font-size="20" text-anchor="start">N20 · right2</text>
+<rect x="65" y="1185" width="1870" height="245" rx="10" fill="#fbf8ff" stroke="#afa0c4" stroke-width="2" stroke-dasharray="10 7"/>
+<text x="85" y="1220" font-size="23" text-anchor="start" font-weight="bold">CAMERA / GIMBAL SERVO  •  Separate three-wire connection at the main chassis/front cap</text>
+<text x="120" y="1272" font-size="24" text-anchor="start" style="fill:#1679b6" font-weight="bold">Signal source: Pi GPIO 17 (gimbal)</text>
+<text x="120" y="1310" font-size="21" text-anchor="start">Optional manipulator: arm GPIO 27, gripper GPIO 18</text>
+<text x="120" y="1400" font-size="20" text-anchor="start">Matching SERVO_PWM labels join this line to the Pi output above.</text>
+<rect x="1000" y="1240" width="500" height="165" rx="10" fill="#f2ebfc" stroke="#afa0c4" stroke-width="2"/>
+<text x="1250" y="1272" font-size="25" text-anchor="middle" font-weight="bold">MG90S camera/gimbal servo</text>
+<polyline points="740,1300 1000,1300" fill="none" stroke="#cb3148" stroke-width="3"/>
+<text x="740" y="1290" font-size="21" text-anchor="start" style="fill:#cb3148" font-weight="bold">+5V</text>
+<text x="1020" y="1307" font-size="21" text-anchor="start" style="fill:#cb3148">V+</text>
+<polyline points="740,1335 1000,1335" fill="none" stroke="#334155" stroke-width="3"/>
+<text x="740" y="1325" font-size="21" text-anchor="start" style="fill:#334155" font-weight="bold">GND</text>
+<text x="1020" y="1342" font-size="21" text-anchor="start" style="fill:#334155">GND</text>
+<polyline points="540,1370 1000,1370" fill="none" stroke="#1679b6" stroke-width="3"/>
+<text x="540" y="1360" font-size="21" text-anchor="start" style="fill:#1679b6" font-weight="bold">SERVO_PWM</text>
+<text x="1020" y="1377" font-size="21" text-anchor="start" style="fill:#1679b6">SIGNAL</text>
+<text x="1550" y="1280" font-size="22" text-anchor="start" font-weight="bold">5 V power from the BEC</text>
+<text x="1550" y="1315" font-size="21" text-anchor="start">Common ground with the Pi</text>
+<text x="1550" y="1350" font-size="20" text-anchor="start">No DRV8833 or TCA connection</text>
+<text x="1550" y="1385" font-size="21" text-anchor="start">App controls: J / L or + / −</text>
+<text x="70" y="1485" font-size="24" text-anchor="start" font-weight="bold">BUILD NOTES</text>
+<text x="70" y="1525" font-size="21" text-anchor="start">• Use complete DRV8833 breakout boards with their onboard capacitors; this is not a bare-chip schematic.</text>
+<text x="70" y="1557" font-size="21" text-anchor="start">• * STBY is the carrier enable label (nSLEEP on the DRV8833 chip); keep it HIGH. Never join 3V3 and +5V rails.</text>
+<text x="70" y="1589" font-size="21" text-anchor="start">• The drawing shows the 5 V motor option. With a separate 6 V buck, move only driver VM feeds to that motor rail.</text>
+<text x="70" y="1621" font-size="21" text-anchor="start">• Keep the Pi and servo on regulated 5 V, not the 6 V motor rail or raw 3S. Budget for servo startup/stall current.</text>
+<text x="70" y="1653" font-size="21" text-anchor="start">• Do not power the Pi through its 5 V header and a separate USB supply at the same time.</text>
+<text x="70" y="1685" font-size="21" text-anchor="start">• Connector numbering is a proposed assignment, not the physical pinout of your plugs. Wire both halves identically.</text>
+<text x="70" y="1717" font-size="21" text-anchor="start">• The environment module already uses its six connector contacts; use a separate servo plug for the gimbal.</text>
+<text x="70" y="1749" font-size="21" text-anchor="start">• I2C sensors and camera ribbon wiring are in the other guides. Servo PWM releases after 0.3 s by default.</text>
+<text x="70" y="1820" font-size="18" text-anchor="start" style="fill:#50657a">References: TI DRV8833 datasheet; TowerPro MG90S; Raspberry Pi GPIO documentation; robot/config.json.</text>
+</svg>

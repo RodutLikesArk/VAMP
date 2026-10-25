@@ -70,6 +70,10 @@ These are example contact assignments on your detachable connector, **not Pi phy
 
 The IMU and multiplexer stay in the main chassis. The AHT10 and MQ-2 go on the environment module. This sensor connector assignment is specific to the environment module; do not assume it is interchangeable with the manipulator's servo wiring.
 
+## Gimbal servo alongside the scanner
+
+Use a separate three-wire gimbal connection: **signal → GPIO17**, **V+ → regulated 5 V BEC rail**, **GND → common Pi/BEC ground**. The environment connector above already uses all six contacts. Servo signal does not go through the TCA9548A, and servo V+ does not connect to the 3V3 sensor rail or the 6 V motor rail. The gimbal remains available with the scanner selected; use J/L or its +/- buttons after ARM. [Submarine and servo wiring diagram](submarine-minimum-wiring.md) shows the complete connection.
+
 ## Update and enable
 
 Download the updated Windows executable, then run these commands on the Pi from its VAMP directory:
