@@ -3,9 +3,27 @@ import glob
 import math
 import time
 from pathlib import Path
+from .imu import MPU6050
 
 
 def validate_config(c):
+    imu = c['imu']
+    if type(imu.get('enabled')) is not bool:
+        raise ValueError('imu.enabled must be true or false')
+    if imu.get('address', 104) not in (104, 105):
+        raise ValueError('MPU-6050 address must be 104 (0x68) or 105 (0x69)')
+    count = imu.get('calibration_samples', 100)
+    if type(count) is not int or not 1 <= count <= 1000:
+        raise ValueError('IMU calibration_samples must be in 1..1000')
+    tau = imu.get('filter_tau_seconds', 0.5)
+    if type(tau) not in (int, float) or not math.isfinite(tau) or not 0.05 <= tau <= 10:
+        raise ValueError('IMU filter_tau_seconds must be in 0.05..10')
+    for axis in ('pitch', 'roll', 'yaw'):
+        if imu.get(axis+'_sign', 1) not in (-1, 1):
+            raise ValueError('IMU axis signs must be 1 or -1')
+        offset = imu.get(axis+'_offset_deg', 0)
+        if type(offset) not in (int, float) or not math.isfinite(offset):
+            raise ValueError('IMU offsets must be finite numbers')
     pins = [p for pair in c['motors'].values() for p in pair]
     if any(len(pair) != 2 for pair in c['motors'].values()):
         raise ValueError('Every motor needs two driver input pins')
@@ -41,7 +59,14 @@ class Hardware:
         self.servo_values = dict.fromkeys(config['servos'], 0.0)
         self.light = False
         self.last_imu_sample = None
-        self.telemetry = {'pitch_deg': None, 'temperature_c': None, 'gas_alarm_raw': None, 'sensor_error': None}
+        self.imu = None
+        self.next_imu_retry = 0.0
+        self.aux_error = None
+        self.telemetry = {'pitch_deg': None, 'roll_deg': None, 'yaw_deg': None,
+                          'orientation_valid': False, 'imu_calibrating': False,
+                          'imu_calibration_progress': 0.0, 'imu_error': None,
+                          'imu_temperature_c': None, 'temperature_c': None,
+                          'gas_alarm_raw': None, 'sensor_error': None}
         if simulate:
             return
         if not config['wiring_confirmed']:
@@ -57,12 +82,8 @@ class Hardware:
                 self.led = LED(config['led_pin'])
             if config.get('mq2_digital_pin') is not None:
                 self.gas = DigitalInputDevice(config['mq2_digital_pin'], pull_up=False)
-            if config['imu']['enabled']:
-                from smbus2 import SMBus
-                self.bus = SMBus(config['imu']['bus'])
-                address = config['imu']['address']
-                self.bus.write_byte_data(address, 0x6B, 0)
-                self.bus.write_byte_data(address, 0x1C, 0)  # +/-2g
+            # IMU initialization happens in its own reader thread. A missing
+            # optional module must not prevent manual robot control from booting.
         except Exception:
             self.close()
             raise
@@ -95,26 +116,48 @@ class Hardware:
             self.led.value = enabled
 
     def sample(self):
+        self.sample_imu()
+        self.sample_aux()
+
+    def sample_imu(self):
+        if not self.config['imu']['enabled']:
+            return
         if self.simulate:
-            self.telemetry.update(pitch_deg=0.0 if self.config['imu']['enabled'] else None)
-            self.last_imu_sample = time.monotonic() if self.config['imu']['enabled'] else None
+            self.telemetry.update(pitch_deg=0.0, roll_deg=0.0, yaw_deg=0.0,
+                                  orientation_valid=True, imu_calibrating=False,
+                                  imu_calibration_progress=1.0, imu_error=None)
+            self.last_imu_sample = time.monotonic()
+            return
+        if time.monotonic() < self.next_imu_retry:
+            return
+        try:
+            if self.bus is None:
+                from smbus2 import SMBus
+                self.bus = SMBus(self.config['imu']['bus'])
+            if self.imu is None:
+                self.imu = MPU6050(self.bus, self.config['imu'])
+            reading = self.imu.read()
+            reading['imu_error'] = None
+            self.telemetry.update(reading)
+            self.last_imu_sample = time.monotonic() if reading['orientation_valid'] else None
+        except Exception as exc:
+            self.telemetry.update(pitch_deg=None, roll_deg=None, yaw_deg=None,
+                                  orientation_valid=False, imu_calibrating=False,
+                                  imu_error='HW-123: '+str(exc))
+            self.last_imu_sample = None
+            self.imu = None
+            if self.bus:
+                try:
+                    self.bus.close()
+                except OSError:
+                    pass
+            self.bus = None
+            self.next_imu_retry = time.monotonic() + 1.0
+
+    def sample_aux(self):
+        if self.simulate:
             return
         errors = []
-        self.telemetry['pitch_deg'] = None
-        if self.bus:
-            try:
-                data = self.bus.read_i2c_block_data(self.config['imu']['address'], 0x3B, 6)
-                def signed(i):
-                    v = (data[i] << 8) | data[i + 1]
-                    return v - 65536 if v >= 32768 else v
-                x, y, z = (signed(i) for i in (0, 2, 4))
-                if x == y == z == 0:
-                    raise ValueError('Invalid zero IMU sample')
-                pitch = math.degrees(math.atan2(-x, math.sqrt(y*y + z*z)))
-                self.telemetry['pitch_deg'] = pitch * self.config['imu']['pitch_sign'] - self.config['imu']['pitch_offset_deg']
-                self.last_imu_sample = time.monotonic()
-            except Exception as exc:
-                errors.append('IMU: ' + str(exc))
         self.telemetry['temperature_c'] = None
         if self.config.get('temperature_device'):
             try:
@@ -127,7 +170,17 @@ class Hardware:
             except Exception as exc:
                 errors.append('Temperature: ' + str(exc))
         self.telemetry['gas_alarm_raw'] = bool(self.gas.value) if self.gas else None
-        self.telemetry['sensor_error'] = '; '.join(errors) or None
+        self.aux_error = '; '.join(errors) or None
+
+    def telemetry_snapshot(self):
+        result = dict(self.telemetry)
+        result['imu_enabled'] = self.config['imu']['enabled']
+        age = None if self.last_imu_sample is None else time.monotonic()-self.last_imu_sample
+        result['imu_age_s'] = age
+        if age is None or age > 0.5:
+            result.update(pitch_deg=None, roll_deg=None, yaw_deg=None, orientation_valid=False)
+        result['sensor_error'] = '; '.join(e for e in (result.get('imu_error'), self.aux_error) if e) or None
+        return result
 
     def stop(self):
         self.drive({})

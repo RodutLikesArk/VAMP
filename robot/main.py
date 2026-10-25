@@ -135,11 +135,17 @@ def sensor_loop(hardware, quit_event):
     # DS18B20/I2C reads must never delay motor stopping or the watchdog.
     while not quit_event.is_set():
         try:
-            hardware.sample()
+            hardware.sample_aux()
         except Exception:
             logging.exception('Sensor read failed')
-            hardware.telemetry['pitch_deg'] = None
-        quit_event.wait(0.1)
+        quit_event.wait(0.5)
+
+
+def imu_loop(hardware, quit_event):
+    while not quit_event.is_set():
+        start = time.monotonic()
+        hardware.sample_imu()
+        quit_event.wait(max(0.001, 0.02-(time.monotonic()-start)))
 
 
 def main():
@@ -159,11 +165,13 @@ def main():
     quit_event = threading.Event()
     worker = threading.Thread(target=control_loop, args=(controller, quit_event), daemon=True)
     sensors = threading.Thread(target=sensor_loop, args=(hardware, quit_event), daemon=True)
+    imu = threading.Thread(target=imu_loop, args=(hardware, quit_event), daemon=True)
     server = None
     try:
         server = Server((args.host or config['host'], args.port if args.port is not None else config['port']), handler_for(controller, camera, config['token']))
         worker.start()
         sensors.start()
+        imu.start()
         print('V.A.M.P. %s on port %s' % ('SIMULATION' if args.simulate else 'GPIO', server.server_port), flush=True)
         server.serve_forever()
     except KeyboardInterrupt:
@@ -174,6 +182,8 @@ def main():
             worker.join(timeout=3)
         if sensors.is_alive():
             sensors.join(timeout=3)
+        if imu.is_alive():
+            imu.join(timeout=3)
         with controller.lock:
             controller.halt('Shutdown')
         if server:

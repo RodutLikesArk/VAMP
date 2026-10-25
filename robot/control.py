@@ -121,4 +121,4 @@ class Controller:
                     'estopped': self.estopped, 'reason': self.reason, 'simulate': self.hw.simulate,
                     'motors': dict(self.hw.outputs), 'active_servo': self.hw.active_servo,
                     'servo_values': dict(self.hw.servo_values), 'light': self.hw.light,
-                    'stabilize': self.stabilize, 'telemetry': dict(self.hw.telemetry)}
+                    'stabilize': self.stabilize, 'telemetry': self.hw.telemetry_snapshot()}

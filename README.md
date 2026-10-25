@@ -135,9 +135,47 @@ The example servo GPIOs are gimbal 17, arm 27, gripper 18. Optional LED, MQ-2 di
 
 `invert_motors` reverses named motor channels. Match the signs experimentally with the mechanism supported and propellers unloaded. Positive surge means forward; positive yaw means right turn; positive heave means up; positive pitch means nose up. The included geometry assumes vertical thrusters are separated **front to rear**. If they are side by side, differential thrust controls roll instead; change the mixer before enabling pitch stabilization. Four fixed thrusters do not establish independent control of every axis.
 
+## HW-123 orientation display
+
+HW-123 is an MPU-6050 six-axis accelerometer/gyroscope board. The Pi reader supports that chip over I2C, and the Windows app shows a small rotating 3D submarine over the lower-right corner of the camera view. It includes pitch, roll and **relative** yaw; there is no magnetometer or absolute compass heading. Double-click the visual to zero its displayed heading only. This does not change the controller's sensor reference or PID.
+
+With all power off, connect the module as follows (read your board's labels; physical pin order can vary):
+
+| HW-123 | Raspberry Pi |
+| --- | --- |
+| VCC | 3.3 V, physical pin 1 |
+| GND | GND, physical pin 6 |
+| SDA | GPIO2 / SDA1, physical pin 3 |
+| SCL | GPIO3 / SCL1, physical pin 5 |
+| AD0 | GND for address 0x68; 3.3 V selects 0x69 |
+| INT, XDA, XCL | Leave unconnected for this reader |
+
+Use 3.3 V supply/logic on the Pi side; never pull SDA/SCL up to 5 V. GPIO2/3 cannot also be motor or servo outputs. The configuration validator checks that conflict. Mount the sensor rigidly with X along the hull and Z upward. Validate the pitch/roll directions with hand tilts; `pitch_sign`, `roll_sign`, `yaw_sign` can each be 1 or -1, with per-axis `_offset_deg` adjustments. The visual treats positive displayed pitch as bow-up; set `pitch_sign` to match the actual mounting before using stabilization. Do not treat the board's temperature reading as water temperature.
+
+Update both the Pi source and the Windows executable. On the Pi, from the project directory:
+
+```bash
+sudo systemctl stop vamp
+git pull --ff-only
+sudo raspi-config nonint do_i2c 0
+sudo apt install -y i2c-tools
+.venv/bin/python -m pip install -r robot/requirements.txt
+sudo i2cdetect -y 1
+.venv/bin/python tools/configure_imu.py --enable --address 0x68
+sudo systemctl restart vamp
+```
+
+Use `--address 0x69` if that is the address shown by i2cdetect. If `/dev/i2c-1` is not yet present after enabling I2C, reboot the Pi and resume these steps. `configure_imu.py` modifies only the existing local IMU settings, preserving motor wiring and the token. It does not automatically enable stabilization. To disable the module, run the same command with `--disable` instead of `--enable`, then restart vamp.
+
+Keep the module still for approximately 2 seconds at startup/reconnection. The widget shows calibration progress, then live attitude. Large movement resets calibration. Reads are checked against WHO_AM_I; missing hardware is retried in the background rather than preventing manual control from starting. No sensor data is fabricated when hardware is absent. Simulation reports an explicitly simulated level attitude when its IMU configuration is enabled.
+
+Pitch/roll use a complementary filter with gyro-bias calibration and gravity correction. Relative yaw is integrated and will drift, especially near vertical orientations; this is a prototype attitude estimate, not a navigation system. A reading gap longer than 0.5 s triggers recalibration. Sensor data older than 0.5 s is unavailable in telemetry and stops active pitch stabilization. The PC also clears its visual after 0.75 s without a status update. Temperature-sensor reads run separately so they cannot stall the 50 Hz IMU loop or the motor watchdog.
+
+References: [HW-123 manufacturer description](https://www.szhwmake.com/prod_view.aspx?FId=t3%3A95%3A3&Id=322&TypeId=95), [TDK MPU-6050 register map](https://invensense.tdk.com/wp-content/uploads/2015/02/MPU-6000-Register-Map.pdf).
+
 ## Sensors and stabilization
 
-- **MPU6050:** `imu.enabled=true` enables I2C accelerometer pitch readings. Align sensor X with robot forward and Z with up, set `pitch_sign`/`pitch_offset_deg`, and validate the correction direction before enabling the GUI checkbox. The optional PID aims for zero pitch; it is disabled by default and requires tuning. Pitch is accelerometer-derived and can be disturbed by acceleration; this is a starting point, not a validated attitude estimator. Missing/stale IMU data disarms stabilization. There is no depth hold, because no depth/pressure sensor is specified.
+- **HW-123 / MPU6050:** see the orientation-display instructions above. The optional PID still controls zero pitch only, requires direction checks/tuning, and stays disabled until selected in the GUI. There is no depth hold, because no depth/pressure sensor is specified.
 - **DS18B20:** set `temperature_device` to the exact `28-...` device ID or `auto` for the first detected sensor. Reports temperature only; DS18B20 does not measure humidity.
 - **MQ-2:** set `mq2_digital_pin` to a mapped free BCM pin after confirming input voltage. Reports the raw comparator state only. Analog readings require an ADC, which was not specified. No gas concentration, gas identity, or assessment of atmosphere safety is inferred from the digital signal.
 - **LED:** set `led_pin` for a suitable output circuit. The GUI light checkbox controls it. RGB/message patterns are not implemented because the LED hardware and messages are unspecified.

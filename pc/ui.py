@@ -4,6 +4,7 @@ from tkinter import ttk, filedialog, messagebox
 from pathlib import Path
 
 from .settings import save_settings, data_dir
+from .attitude import AttitudeIndicator
 
 BG = '#090f1b'
 PANEL = '#111c2c'
@@ -80,6 +81,10 @@ class OperatorView:
         self.placeholder.pack(fill='both', expand=True)
         self.placeholder.bind('<Configure>', self.draw_placeholder)
         self.video_label = tk.Label(self.camera_stage, bg=BG, borderwidth=0)
+        self.attitude_panel = tk.Frame(self.camera_stage, bg=BG)
+        self.attitude_panel.place(relx=1, rely=1, anchor='se', x=-10, y=-10)
+        self.orientation = AttitudeIndicator(self.attitude_panel)
+        self.orientation.pack()
         tk.Label(camera, textvariable=self.video_status, bg=PANEL, fg=MUTED, font=('Segoe UI', 9), anchor='w', wraplength=650).pack(fill='x', padx=16, pady=12)
         guide = tk.Frame(camera, bg=SURFACE, padx=12, pady=10)
         guide.pack(fill='x', padx=12, pady=(0, 12))
@@ -178,6 +183,7 @@ class OperatorView:
         state = 'E-STOP' if data['estopped'] else ('ARMED' if data['armed'] else 'STANDBY')
         self.state_badge.configure(text='●  ' + state + (' / SIM' if data['simulate'] else ''), fg=RED if data['estopped'] else (ACCENT if data['armed'] else BLUE))
         telemetry = data['telemetry']
+        self.orientation.set_telemetry(telemetry, data['simulate'])
         self.sensor_vars['pitch'].set('— °' if telemetry['pitch_deg'] is None else '%.1f °' % telemetry['pitch_deg'])
         self.sensor_vars['temperature'].set('— °C' if telemetry['temperature_c'] is None else '%.1f °C' % telemetry['temperature_c'])
         self.sensor_vars['gas'].set('NO SENSOR' if telemetry['gas_alarm_raw'] is None else ('HIGH' if telemetry['gas_alarm_raw'] else 'LOW'))

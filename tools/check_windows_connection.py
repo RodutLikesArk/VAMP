@@ -21,9 +21,11 @@ from robot.main import handler_for
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--exe', type=Path, default=ROOT / 'dist/VAMP-Operator.exe')
+    parser.add_argument('--imu-demo', action='store_true', help='Exercise the attitude UI with explicitly simulated sensor data')
     args = parser.parse_args()
     config = json.loads((ROOT / 'robot/config.json').read_text())
     config['token'] = secrets.token_hex(16)
+    config['imu']['enabled'] = args.imu_demo
     hardware = Hardware(config, True)
     controller = Controller(hardware)
     camera = Camera(config['camera'], True)
@@ -33,6 +35,9 @@ def main():
     class Handler(base):
         def do_GET(self):
             if self.path == '/api/status' and self.headers.get('Authorization') == 'Bearer ' + config['token']:
+                if args.imu_demo:
+                    hardware.sample_imu()
+                    hardware.telemetry.update(roll_deg=15.0,pitch_deg=20.0,yaw_deg=30.0)
                 requests.append(self.path)
             super().do_GET()
 

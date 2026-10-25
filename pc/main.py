@@ -38,6 +38,7 @@ class App(OperatorView):
         self.status = tk.StringVar(value='Connecting...')
         self.video_status = tk.StringVar(value='Camera connecting...')
         self.servo_positions = dict(gimbal=0.0, arm=0.0, gripper=0.0)
+        self.last_status_at = 0.0
         self.build_ui(root)
         root.bind('<KeyPress>', self.press)
         root.bind('<KeyRelease>', self.release)
@@ -253,6 +254,7 @@ class App(OperatorView):
         while not self.events.empty():
             kind, data = self.events.get_nowait()
             if kind == 'status':
+                self.last_status_at = time.monotonic()
                 self.render_status(data)
                 state = 'E-STOP' if data['estopped'] else ('ARMED' if data['armed'] else 'DISARMED')
                 self.status.set('%s · %s / %s · %s%s' % (state, data['mode'], data['attachment'], data.get('reason') or 'Hold SPACE to drive', ' · SIMULATION' if data['simulate'] else ''))
@@ -280,6 +282,9 @@ class App(OperatorView):
             self.video_label.place(relx=0.5, rely=0.5, anchor='center')
         else:
             self.video_label.place_forget()
+        self.attitude_panel.lift()
+        if time.monotonic()-self.last_status_at > 0.75:
+            self.orientation.set_telemetry({})
         self.root.after(50, self.refresh)
 
     def close(self):

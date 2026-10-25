@@ -18,7 +18,7 @@
   "servo_pulse_ms": [1.0, 2.0],
   "servo_release_seconds": 0.3,
   "led_pin": null,
-  "imu": {"enabled": false, "bus": 1, "address": 104, "pitch_sign": 1, "pitch_offset_deg": 0, "kp": 0.015, "ki": 0, "kd": 0.002, "max_correction": 0.2},
+  "imu": {"enabled": false, "model": "HW-123 / MPU-6050", "bus": 1, "address": 104, "calibration_samples": 100, "filter_tau_seconds": 0.5, "pitch_sign": 1, "pitch_offset_deg": 0, "roll_sign": 1, "roll_offset_deg": 0, "yaw_sign": 1, "yaw_offset_deg": 0, "kp": 0.015, "ki": 0, "kd": 0.002, "max_correction": 0.2},
   "temperature_device": null,
   "mq2_digital_pin": null,
   "camera": {"enabled": true, "width": 1280, "height": 720, "fps": 20}
