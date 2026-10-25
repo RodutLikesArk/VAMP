@@ -1,6 +1,7 @@
 """Desktop operator GUI. Run: python -m pc.main --url http://127.0.0.1:8765"""
 import argparse
 import io
+import logging
 import queue
 import threading
 import time
@@ -131,6 +132,7 @@ class App(OperatorView):
             return False
 
     def network(self):
+        last_error = None
         while not self.closed.is_set():
             started = time.monotonic()
             try:
@@ -163,7 +165,12 @@ class App(OperatorView):
                         if generation == self.generation and not status['armed']:
                             self.allowed = False
                 self.events.put(('status', status))
+                last_error = None
             except Exception as exc:
+                error = (type(exc).__name__, str(exc))
+                if error != last_error:
+                    logging.warning('Robot connection failed', exc_info=True)
+                    last_error = error
                 # A failed heartbeat never automatically resumes driving on reconnect.
                 self.invalidate()
                 self.events.put(('error', str(exc)))
@@ -179,6 +186,7 @@ class App(OperatorView):
         except ImportError:
             self.events.put(('video', 'Install PC requirements for camera display. Control remains available.'))
             return
+        last_error = None
         while not self.closed.is_set():
             try:
                 with self.client.video() as stream:
@@ -191,7 +199,12 @@ class App(OperatorView):
                             if not self.weights:
                                 self.display_frame = image.copy()
                         self.events.put(('video', 'Live camera' + (' · custom defect model enabled' if self.weights else '')))
+                        last_error = None
             except Exception as exc:
+                error = (type(exc).__name__, str(exc))
+                if error != last_error:
+                    logging.warning('Camera connection failed', exc_info=True)
+                    last_error = error
                 self.events.put(('video', 'Camera unavailable: ' + str(exc)))
                 with self.frame_lock:
                     self.latest_frame, self.display_frame = None, None
