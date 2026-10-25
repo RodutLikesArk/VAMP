@@ -28,8 +28,10 @@ def render_unit(root, username, simulate=False):
     if not re.fullmatch(r'[a-zA-Z_][a-zA-Z0-9_.-]*\$?', username):
         raise ValueError('Unsupported service username')
     root = PurePosixPath(root)
-    # WorkingDirectory does not perform environment-variable expansion.
-    working = quote_path(root).replace('$$', '$')
+    # Unlike ExecStart arguments, WorkingDirectory is a single raw path, not
+    # shell-style quoted text. Quotes become part of the path and make it fail
+    # systemd's absolute-path check. Only percent specifiers need escaping here.
+    working = str(root).replace('%', '%%')
     command = f'{quote_path(root / ".venv/bin/python")} -u -m robot.main --config {quote_path(root / "robot/config.local.json")}'
     if simulate:
         command += ' --simulate'
@@ -77,6 +79,9 @@ def main():
     with tempfile.TemporaryDirectory(prefix='vamp-service-') as folder:
         source = Path(folder) / 'vamp.service'
         source.write_text(unit, encoding='utf-8')
+        # Let systemd parse the generated file before replacing the installed
+        # unit. String assertions alone cannot validate its directive syntax.
+        subprocess.run(['systemd-analyze', 'verify', str(source)], check=True)
         subprocess.run(['sudo', 'install', '-m', '644', str(source), '/etc/systemd/system/vamp.service'], check=True)
     subprocess.run(['sudo', 'systemctl', 'daemon-reload'], check=True)
     # Stop an existing unit before re-enabling so mode/path edits take effect.
