@@ -92,8 +92,15 @@ class App(OperatorView):
             self.stop('/api/estop')
             return
         widget = getattr(event, 'widget', None)
-        if widget and widget.winfo_class() in ('Entry', 'TEntry', 'TCombobox', 'Spinbox'):
-            return
+        if widget:
+            # Tk-created combobox popdowns have no Python widget wrapper;
+            # tkinter may therefore supply the widget path as a plain string.
+            try:
+                widget_class = self.root.tk.call('winfo', 'class', str(widget))
+            except tk.TclError:
+                return
+            if widget_class in ('Entry', 'TEntry', 'TCombobox', 'Spinbox', 'TSpinbox', 'Listbox'):
+                return
         with self.lock:
             new = key not in self.keys
             self.keys.add(key)
@@ -111,8 +118,17 @@ class App(OperatorView):
         self.root.after(20, self.check_focus)
 
     def check_focus(self):
-        if not self.closed.is_set() and self.root.focus_displayof() is None:
+        if not self.closed.is_set() and not self.has_app_focus():
             self.stop('/api/stop')
+
+    def has_app_focus(self):
+        # focus_displayof() resolves the returned Tcl path to a Python widget.
+        # That raises KeyError('popdown') for ttk's internally created listbox.
+        # We only need to know whether this Tk application still has focus.
+        try:
+            return bool(self.root.tk.call('focus', '-displayof', self.root._w))
+        except tk.TclError:
+            return False
 
     def network(self):
         while not self.closed.is_set():
