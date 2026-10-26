@@ -17,6 +17,9 @@ from .client import Client, jpeg_frames
 
 
 class App(OperatorView):
+    DRIVE_KEYS = frozenset(('space', 'w', 'a', 's', 'd', 'r', 'f', 't', 'g',
+                            'j', 'l', 'u', 'o', 'i', 'k'))
+
     def __init__(self, root, client, weights=None):
         self.root, self.client = root, client
         self.closed = threading.Event()
@@ -40,8 +43,7 @@ class App(OperatorView):
         self.servo_positions = dict(gimbal=0.0, arm=0.0, gripper=0.0)
         self.last_status_at = 0.0
         self.build_ui(root)
-        root.bind('<KeyPress>', self.press)
-        root.bind('<KeyRelease>', self.release)
+        self.bind_drive_controls(root)
         root.bind('<FocusOut>', self.focus_out)
         root.protocol('WM_DELETE_WINDOW', self.close)
         threading.Thread(target=self.network, daemon=True).start()
@@ -88,11 +90,22 @@ class App(OperatorView):
             # A single slot serializes servo requests; never command two at once.
             self.pending_servo = {'name': name, 'value': self.servo_positions[name]}
 
-    def press(self, event):
-        key = event.keysym.lower()
-        if key == 'escape':
-            self.stop('/api/estop')
-            return
+    def bind_drive_controls(self, widget):
+        # Tk's default order is widget -> class -> toplevel. A focused
+        # checkbox/button handles SPACE in its class binding, so a toplevel
+        # handler runs too late to prevent toggling or invoking it. Our tag
+        # handles reserved keys before either widget or class shortcuts.
+        if not hasattr(self, 'drive_bindtag'):
+            self.drive_bindtag = f'VampDrive_{id(self)}'
+            self.root.bind_class(self.drive_bindtag, '<KeyPress>', self.press)
+            self.root.bind_class(self.drive_bindtag, '<KeyRelease>', self.release)
+        tags = widget.bindtags()
+        if self.drive_bindtag not in tags:
+            widget.bindtags((self.drive_bindtag,) + tags)
+        for child in widget.winfo_children():
+            self.bind_drive_controls(child)
+
+    def editing_input(self, event):
         widget = getattr(event, 'widget', None)
         if widget:
             # Tk-created combobox popdowns have no Python widget wrapper;
@@ -100,9 +113,17 @@ class App(OperatorView):
             try:
                 widget_class = self.root.tk.call('winfo', 'class', str(widget))
             except tk.TclError:
-                return
-            if widget_class in ('Entry', 'TEntry', 'TCombobox', 'Spinbox', 'TSpinbox', 'Listbox'):
-                return
+                return True
+            return widget_class in ('Entry', 'TEntry', 'TCombobox', 'Spinbox', 'TSpinbox', 'Listbox')
+        return False
+
+    def press(self, event):
+        key = event.keysym.lower()
+        if key == 'escape':
+            self.stop('/api/estop')
+            return 'break'
+        if self.editing_input(event) or key not in self.DRIVE_KEYS:
+            return
         with self.lock:
             new = key not in self.keys
             self.keys.add(key)
@@ -110,10 +131,14 @@ class App(OperatorView):
             mapping = {'j': ('gimbal', -0.1), 'l': ('gimbal', 0.1), 'u': ('arm', -0.1), 'o': ('arm', 0.1), 'i': ('gripper', -0.1), 'k': ('gripper', 0.1)}
             if key in mapping:
                 self.move_servo(*mapping[key])
+        return 'break'
 
     def release(self, event):
+        key = event.keysym.lower()
         with self.lock:
-            self.keys.discard(event.keysym.lower())
+            self.keys.discard(key)
+        if key in self.DRIVE_KEYS and not self.editing_input(event):
+            return 'break'
 
     def focus_out(self, event):
         # Child widget focus changes are normal; leaving the app stops the robot.

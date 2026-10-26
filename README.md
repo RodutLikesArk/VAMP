@@ -63,6 +63,8 @@ Choose mobility and front modules, press **ARM**, then hold **SPACE** and moveme
 
 GUI +/- buttons also control servos. The operator slider scales the robot's configured `max_speed`; with both default settings, maximum output is 0.25. Changing a module stops/disarms the robot. Loss of application focus stops/disarms it. A failed command exchange stops the PC from resuming motion automatically. The Pi independently stops/disarms after 0.6 seconds without a valid command. Status requests do not extend that deadline.
 
+SPACE is reserved for the drive hold control across the dashboard, including when a checkbox or button has focus. Holding it does not toggle pitch stabilization/illumination or activate the focused button. Use the mouse to change those options; text fields and module dropdowns retain their native keyboard input. Windows users need VAMP-Operator v0.4.1 or later for this keyboard fix.
+
 Only one servo PWM signal is enabled at a time. Its signal is detached after 0.3 seconds unless another servo command refreshes it. Detaching PWM does **not** physically cut servo power, and it removes holding torque. Tune pulse limits and release time for your mechanism.
 
 ## Raspberry Pi setup
