@@ -36,7 +36,7 @@ In the PC app select **submarine**, leave **Pitch stabilization unchecked** for 
 | SPACE + R | Both vertical motors |
 | SPACE + T | Both vertical motors in opposite directions |
 
-The existing crawler selector is retained for app compatibility and drives **only the rear pair** with this preset. It leaves both vertical thrusters stopped. Select submarine to use the vertical controls. Directions can be reversed per motor with `invert_motors` after verifying the physical installation.
+With the crawler attachment installed, crawler mode drives **two motors per side**: left1/left2 and right1/right2. With the submarine attachment installed, select submarine: W/S and A/D operate the rear pair, while R/F and T/G operate the vertical pair. Directions can be reversed per motor with `invert_motors` after verifying the physical installation. If you applied an earlier version of this helper that only drove two crawler motors, pull the update and run it again to update your local profile.
 
 If it fails to start, run `journalctl -u vamp -n 50 --no-pager`. To restore the original local configuration, stop the service, copy the backup over `robot/config.local.json`, then restart. Review the backup's previous GPIO assignments before using it.
 

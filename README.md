@@ -65,6 +65,8 @@ GUI +/- buttons also control servos. The operator slider scales the robot's conf
 
 SPACE is reserved for the drive hold control across the dashboard, including when a checkbox or button has focus. Holding it does not toggle pitch stabilization/illumination or activate the focused button. Use the mouse to change those options; text fields and module dropdowns retain their native keyboard input. Windows users need VAMP-Operator v0.4.1 or later for this keyboard fix.
 
+VAMP-Operator v0.4.2 also returns keyboard focus to the driving surface when ARM is clicked, so SPACE works immediately after selecting a module. For the two-driver WiringPi-chart layout, pull the latest source and rerun `python3 tools/configure_submarine_wiring.py` to apply the corrected crawler profile with two motors per side.
+
 Only one servo PWM signal is enabled at a time. Its signal is detached after 0.3 seconds unless another servo command refreshes it. Detaching PWM does **not** physically cut servo power, and it removes holding torque. Tune pulse limits and release time for your mechanism.
 
 ## Raspberry Pi setup

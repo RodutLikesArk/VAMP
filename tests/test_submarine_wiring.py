@@ -35,6 +35,15 @@ class SubmarineWiringTests(unittest.TestCase):
                 self.assertEqual(result[key], config[key], key)
             self.assertIsNone(configure(path))
             self.assertEqual(backup.read_bytes(), original)
+            # Upgrade a previously installed four-motor preset whose crawler
+            # profile only contained the rear pair; keep the first backup.
+            result['profiles']['crawler'] = {'left': ['left1'], 'right': ['right1']}
+            path.write_text(json.dumps(result))
+            configure(path)
+            saved = json.loads(path.read_text())
+            self.assertEqual(saved['profiles']['crawler'], {
+                'left': ['left1', 'left2'], 'right': ['right1', 'right2']})
+            self.assertEqual(backup.read_bytes(), original)
             self.assertEqual(list(Path(folder).glob('*.tmp')), [])
 
     def test_conflicting_sensor_pin_leaves_file_untouched(self):
@@ -92,6 +101,6 @@ class SubmarineWiringTests(unittest.TestCase):
         controller.arm()
         controller.command({'surge': 1})
         controller.tick()
-        self.assertEqual(hw.outputs, {'left1': .5, 'left2': 0, 'right1': .5, 'right2': 0})
+        self.assertEqual(hw.outputs, {'left1': .5, 'left2': .5, 'right1': .5, 'right2': .5})
         controller.halt('test stop')
         self.assertTrue(all(value == 0 for value in hw.outputs.values()))

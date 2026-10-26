@@ -27,9 +27,9 @@ def updated_config(config):
     result = copy.deepcopy(config)
     result['motors'] = copy.deepcopy(MOTORS)
     result['profiles'] = {
-        # Keep the existing PC selector compatible, with vertical thrusters off
-        # in crawler mode. Submarine mode exposes all four thrusters.
-        'crawler': {'left': ['left1'], 'right': ['right1']},
+        # The two installed drivers serve either attachment: two wheel motors
+        # per side in crawler mode, or rear/vertical thrusters in submarine.
+        'crawler': {'left': ['left1', 'left2'], 'right': ['right1', 'right2']},
         'submarine': {'left': ['left1'], 'right': ['right1'],
                       'vertical_front': 'left2', 'vertical_rear': 'right2'},
     }

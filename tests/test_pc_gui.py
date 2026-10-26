@@ -120,6 +120,22 @@ class DesktopTest(unittest.TestCase):
                 pump(0.2)
                 self.assertTrue(controller.armed)
                 self.assertTrue(all(value == 0 for value in hardware.outputs.values()))
+            # ARM must return keyboard control from a module dropdown to the
+            # driving surface, so SPACE cannot reopen the dropdown after ARM.
+            selector.focus_force()
+            pump(0.05)
+            app.arm()
+            pump(0.4)
+            root.event_generate('<KeyPress-space>')
+            root.event_generate('<KeyPress-w>')
+            pump(0.3)
+            self.assertTrue(controller.armed)
+            self.assertEqual(hardware.outputs['left1'], 0.25)
+            self.assertEqual(hardware.outputs['right1'], 0.25)
+            root.event_generate('<KeyRelease-space>')
+            root.event_generate('<KeyRelease-w>')
+            pump(0.2)
+            self.assertTrue(all(value == 0 for value in hardware.outputs.values()))
             # Text and dropdown controls retain their native keyboard input.
             entry = tk.Entry(root)
             entry.place(x=20, y=20, width=200, height=30)

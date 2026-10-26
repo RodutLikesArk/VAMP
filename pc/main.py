@@ -71,6 +71,10 @@ class App(OperatorView):
         self.jobs.put((generation, '/api/modules', {'mode': self.mode.get(), 'attachment': self.attachment.get()}))
 
     def arm(self):
+        # Module dropdowns retain keyboard focus when a non-focusable ARM
+        # button is clicked. Return it to the driving surface so SPACE does
+        # not reopen the dropdown through its native editing bindings.
+        self.root.focus_set()
         generation = self.invalidate()
         # Always apply current selectors before arm, including on first connection.
         self.jobs.put((generation, '/api/modules', {'mode': self.mode.get(), 'attachment': self.attachment.get()}))
