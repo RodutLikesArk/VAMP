@@ -116,6 +116,8 @@ Service installation must be performed on the Pi; it cannot be applied to the Pi
 
 ## Attachment connectors and motor mapping
 
+For a complete bench prototype, use the [breadboard wiring guide](docs/breadboard-prototype.md): two printable sheets cover the power/motor/servo connections and exact sensor/divider breadboard holes, including HW-123, TCA9548A, AHT10 and MQ-2. All Pi GPIO numbers are BCM.
+
 You confirmed **all DRV8833 boards are in the main chassis**. The Pi therefore drives DRV8833 input pins; no attachment firmware, UART, CAN, or I2C command protocol is assumed. A six-pin connector has no inherent data protocol.
 
 Each independent N20 motor needs two driver-output wires. Three independently driven crawler motors on one side need six motor-output conductors through that side's connector. Four of those conductors cannot simultaneously serve as logic-data lines. If the connector really reserves two pins for shared power and four for signals, the electrical diagram must explain where those signals terminate; this software cannot infer that from connector size. Do not wire GPIOs directly to motors or to driver output terminals.

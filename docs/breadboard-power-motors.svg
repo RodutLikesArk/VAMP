@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="1700" viewBox="0 0 2400 1700">
+<rect width="2400" height="1700" fill="white"/>
+<style>text {font-family:Arial,sans-serif;fill:#172c40}</style>
+<text x="60" y="65" font-size="38" text-anchor="start" style="fill:#172c40" font-weight="bold">V.A.M.P. | Complete prototype wiring</text>
+<text x="60" y="105" font-size="23" text-anchor="start" style="fill:#52677b">Sheet 1: power, motor drivers and servo. Sheet 2: breadboard, multiplexer and sensors. All GPIO = BCM.</text>
+<polyline points="60,135 2340,135" fill="none" stroke="#c9d5de" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="60" y="1668" font-size="19" text-anchor="start" style="fill:#52677b">V.A.M.P. | Default robot/config.json | Module drawings use pin LABELS, not physical footprints.</text>
+<text x="2340" y="1668" font-size="21" text-anchor="end" style="fill:#52677b">1 / 2</text>
+<rect x="60" y="160" width="2280" height="340" rx="12" fill="#fffaf7" stroke="#d9bfa9" stroke-width="2"/>
+<text x="85" y="198" font-size="25" text-anchor="start" style="fill:#172c40" font-weight="bold">POWER - direct wires / distribution connectors; keep load current off the breadboard</text>
+<rect x="90" y="240" width="300" height="185" rx="12" fill="#fdf0ef" stroke="#aabcca" stroke-width="2"/>
+<text x="110" y="283" font-size="30" text-anchor="start" style="fill:#172c40" font-weight="bold">3S LiPo</text>
+<text x="110" y="325" font-size="23" text-anchor="start" style="fill:#172c40">11.1 V nominal</text>
+<text x="110" y="364" font-size="23" text-anchor="start" style="fill:#172c40">12.6 V charged</text>
+<text x="110" y="402" font-size="21" text-anchor="start" style="fill:#cb3447" font-weight="bold">Regulator inputs only</text>
+<rect x="540" y="225" width="440" height="100" rx="12" fill="#f4f8fb" stroke="#aabcca" stroke-width="2"/>
+<text x="560" y="261" font-size="25" text-anchor="start" style="fill:#172c40" font-weight="bold">Existing BEC -&gt; regulated 5 V</text>
+<text x="560" y="300" font-size="21" text-anchor="start" style="fill:#172c40">Input must accept a full 3S battery</text>
+<rect x="540" y="365" width="440" height="90" rx="12" fill="#f4f8fb" stroke="#aabcca" stroke-width="2"/>
+<text x="560" y="402" font-size="25" text-anchor="start" style="fill:#172c40" font-weight="bold">Separate motor buck -&gt; 6 V*</text>
+<text x="560" y="441" font-size="21" text-anchor="start" style="fill:#172c40">*Use the actual motor rated voltage</text>
+<polyline points="390,270 465,270 465,250 540,250" fill="none" stroke="#cb3447" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="465,270 465,390 540,390" fill="none" stroke="#cb3447" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="465" cy="270" r="6" fill="#cb3447"/>
+<polyline points="390,410 490,410 490,306 540,306" fill="none" stroke="#334155" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="490,410 490,450 540,450" fill="none" stroke="#334155" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="490" cy="410" r="6" fill="#334155"/>
+<polyline points="980,250 1120,250" fill="none" stroke="#cb3447" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="1150" y="258" font-size="27" text-anchor="start" style="fill:#cb3447" font-weight="bold">+5V: Pi 5V input, servo V+, MQ-2 VCC</text>
+<text x="1150" y="294" font-size="22" text-anchor="start" style="fill:#172c40">Pi power and servo power each get their own direct branch.</text>
+<polyline points="980,390 1120,390" fill="none" stroke="#a03c9d" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="1150" y="398" font-size="27" text-anchor="start" style="fill:#a03c9d" font-weight="bold">VM: DRV1 + DRV2 VM; optional DRV3 VM</text>
+<text x="1150" y="434" font-size="22" text-anchor="start" style="fill:#172c40">If no motor buck: 5 V motor option only if supply current is adequate.</text>
+<text x="85" y="490" font-size="23" text-anchor="start" style="fill:#334155" font-weight="bold">GND: join regulator outputs, Pi, drivers, servo and sensors. Pi 3V3 supplies the sensor rail on sheet 2.</text>
+<rect x="60" y="555" width="395" height="820" rx="12" fill="#edf5fc" stroke="#aabcca" stroke-width="2"/>
+<text x="85" y="597" font-size="31" text-anchor="start" style="fill:#172c40" font-weight="bold">Raspberry Pi</text>
+<text x="85" y="633" font-size="23" text-anchor="start" style="fill:#172c40">3.3 V logic / BCM GPIO</text>
+<polyline points="130,531 130,555" fill="none" stroke="#cb3447" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="130" y="521" font-size="21" text-anchor="middle" style="fill:#cb3447" font-weight="bold">+5V input</text>
+<polyline points="320,531 320,555" fill="none" stroke="#334155" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="320" y="521" font-size="21" text-anchor="middle" style="fill:#334155" font-weight="bold">GND</text>
+<rect x="855" y="580" width="650" height="300" rx="12" fill="#edf8f1" stroke="#97b8a1" stroke-width="2"/>
+<text x="1180" y="622" font-size="27" text-anchor="middle" style="fill:#172c40" font-weight="bold">DRV1 - DRV8833 breakout</text>
+<polyline points="940,555 940,579" fill="none" stroke="#a03c9d" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="940" y="545" font-size="21" text-anchor="middle" style="fill:#a03c9d" font-weight="bold">VM</text>
+<polyline points="1180,555 1180,579" fill="none" stroke="#334155" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="1180" y="545" font-size="21" text-anchor="middle" style="fill:#334155" font-weight="bold">GND</text>
+<polyline points="1415,555 1415,579" fill="none" stroke="#b57608" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="1415" y="545" font-size="21" text-anchor="middle" style="fill:#b57608" font-weight="bold">STBY*</text>
+<text x="85" y="688" font-size="26" text-anchor="start" style="fill:#1675b6" font-weight="bold">GPIO5</text>
+<circle cx="455" cy="680" r="6" fill="#1675b6"/>
+<polyline points="455,680 855,680" fill="none" stroke="#1675b6" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="875" y="688" font-size="24" text-anchor="start" style="fill:#1675b6" font-weight="bold">AIN1</text>
+<text x="1480" y="688" font-size="24" text-anchor="end" style="fill:#18805b" font-weight="bold">AO1</text>
+<polyline points="1505,680 1850,680" fill="none" stroke="#18805b" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="85" y="738" font-size="26" text-anchor="start" style="fill:#1675b6" font-weight="bold">GPIO6</text>
+<circle cx="455" cy="730" r="6" fill="#1675b6"/>
+<polyline points="455,730 855,730" fill="none" stroke="#1675b6" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="875" y="738" font-size="24" text-anchor="start" style="fill:#1675b6" font-weight="bold">AIN2</text>
+<text x="1480" y="738" font-size="24" text-anchor="end" style="fill:#18805b" font-weight="bold">AO2</text>
+<polyline points="1505,730 1850,730" fill="none" stroke="#18805b" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="85" y="808" font-size="26" text-anchor="start" style="fill:#1675b6" font-weight="bold">GPIO12</text>
+<circle cx="455" cy="800" r="6" fill="#1675b6"/>
+<polyline points="455,800 855,800" fill="none" stroke="#1675b6" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="875" y="808" font-size="24" text-anchor="start" style="fill:#1675b6" font-weight="bold">BIN1</text>
+<text x="1480" y="808" font-size="24" text-anchor="end" style="fill:#18805b" font-weight="bold">BO1</text>
+<polyline points="1505,800 1850,800" fill="none" stroke="#18805b" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="85" y="858" font-size="26" text-anchor="start" style="fill:#1675b6" font-weight="bold">GPIO13</text>
+<circle cx="455" cy="850" r="6" fill="#1675b6"/>
+<polyline points="455,850 855,850" fill="none" stroke="#1675b6" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="875" y="858" font-size="24" text-anchor="start" style="fill:#1675b6" font-weight="bold">BIN2</text>
+<text x="1480" y="858" font-size="24" text-anchor="end" style="fill:#18805b" font-weight="bold">BO2</text>
+<polyline points="1505,850 1850,850" fill="none" stroke="#18805b" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="1850" y="662" width="450" height="86" rx="12" fill="#f4faf6" stroke="#97b8a1" stroke-width="2"/>
+<text x="1870" y="713.0" font-size="25" text-anchor="start" style="fill:#18805b" font-weight="bold">Rear LEFT / left1</text>
+<rect x="1850" y="782" width="450" height="86" rx="12" fill="#f4faf6" stroke="#97b8a1" stroke-width="2"/>
+<text x="1870" y="833.0" font-size="25" text-anchor="start" style="fill:#18805b" font-weight="bold">Vertical FRONT / left2</text>
+<rect x="855" y="945" width="650" height="300" rx="12" fill="#edf8f1" stroke="#97b8a1" stroke-width="2"/>
+<text x="1180" y="987" font-size="27" text-anchor="middle" style="fill:#172c40" font-weight="bold">DRV2 - DRV8833 breakout</text>
+<polyline points="940,920 940,944" fill="none" stroke="#a03c9d" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="940" y="910" font-size="21" text-anchor="middle" style="fill:#a03c9d" font-weight="bold">VM</text>
+<polyline points="1180,920 1180,944" fill="none" stroke="#334155" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="1180" y="910" font-size="21" text-anchor="middle" style="fill:#334155" font-weight="bold">GND</text>
+<polyline points="1415,920 1415,944" fill="none" stroke="#b57608" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="1415" y="910" font-size="21" text-anchor="middle" style="fill:#b57608" font-weight="bold">STBY*</text>
+<text x="85" y="1053" font-size="26" text-anchor="start" style="fill:#1675b6" font-weight="bold">GPIO20</text>
+<circle cx="455" cy="1045" r="6" fill="#1675b6"/>
+<polyline points="455,1045 855,1045" fill="none" stroke="#1675b6" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="875" y="1053" font-size="24" text-anchor="start" style="fill:#1675b6" font-weight="bold">AIN1</text>
+<text x="1480" y="1053" font-size="24" text-anchor="end" style="fill:#18805b" font-weight="bold">AO1</text>
+<polyline points="1505,1045 1850,1045" fill="none" stroke="#18805b" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="85" y="1103" font-size="26" text-anchor="start" style="fill:#1675b6" font-weight="bold">GPIO21</text>
+<circle cx="455" cy="1095" r="6" fill="#1675b6"/>
+<polyline points="455,1095 855,1095" fill="none" stroke="#1675b6" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="875" y="1103" font-size="24" text-anchor="start" style="fill:#1675b6" font-weight="bold">AIN2</text>
+<text x="1480" y="1103" font-size="24" text-anchor="end" style="fill:#18805b" font-weight="bold">AO2</text>
+<polyline points="1505,1095 1850,1095" fill="none" stroke="#18805b" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="85" y="1173" font-size="26" text-anchor="start" style="fill:#1675b6" font-weight="bold">GPIO22</text>
+<circle cx="455" cy="1165" r="6" fill="#1675b6"/>
+<polyline points="455,1165 855,1165" fill="none" stroke="#1675b6" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="875" y="1173" font-size="24" text-anchor="start" style="fill:#1675b6" font-weight="bold">BIN1</text>
+<text x="1480" y="1173" font-size="24" text-anchor="end" style="fill:#18805b" font-weight="bold">BO1</text>
+<polyline points="1505,1165 1850,1165" fill="none" stroke="#18805b" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="85" y="1223" font-size="26" text-anchor="start" style="fill:#1675b6" font-weight="bold">GPIO23</text>
+<circle cx="455" cy="1215" r="6" fill="#1675b6"/>
+<polyline points="455,1215 855,1215" fill="none" stroke="#1675b6" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="875" y="1223" font-size="24" text-anchor="start" style="fill:#1675b6" font-weight="bold">BIN2</text>
+<text x="1480" y="1223" font-size="24" text-anchor="end" style="fill:#18805b" font-weight="bold">BO2</text>
+<polyline points="1505,1215 1850,1215" fill="none" stroke="#18805b" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="1850" y="1027" width="450" height="86" rx="12" fill="#f4faf6" stroke="#97b8a1" stroke-width="2"/>
+<text x="1870" y="1078.0" font-size="25" text-anchor="start" style="fill:#18805b" font-weight="bold">Rear RIGHT / right1</text>
+<rect x="1850" y="1147" width="450" height="86" rx="12" fill="#f4faf6" stroke="#97b8a1" stroke-width="2"/>
+<text x="1870" y="1198.0" font-size="25" text-anchor="start" style="fill:#18805b" font-weight="bold">Vertical REAR / right2</text>
+<text x="85" y="1308" font-size="26" text-anchor="start" style="fill:#1675b6" font-weight="bold">GPIO17</text>
+<polyline points="455,1300 1770,1300" fill="none" stroke="#1675b6" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="1770" y="1255" width="530" height="120" rx="12" fill="#f6f1fb" stroke="#b9a1cb" stroke-width="2"/>
+<text x="1795" y="1295" font-size="27" text-anchor="start" style="fill:#1675b6" font-weight="bold">Gimbal servo SIGNAL</text>
+<text x="1795" y="1337" font-size="24" text-anchor="start" style="fill:#172c40">V+ = +5V    GND = common GND</text>
+<text x="85" y="1354" font-size="22" text-anchor="start" style="fill:#172c40" font-weight="bold">GPIO2 / 3 / 26 -&gt; sheet 2</text>
+<text x="60" y="1410" font-size="23" text-anchor="start" style="fill:#b57608" font-weight="bold">*STBY: keep enabled. If not already pulled HIGH on the carrier, use 3V3 after checking its pull-up.</text>
+<rect x="60" y="1435" width="2280" height="160" rx="12" fill="#f9fafc" stroke="#b9c5cf" stroke-width="2" stroke-dasharray="9 6"/>
+<text x="85" y="1472" font-size="24" text-anchor="start" style="fill:#172c40" font-weight="bold">OPTIONAL CRAWLER / MANIPULATOR</text>
+<text x="85" y="1511" font-size="23" text-anchor="start" style="fill:#172c40">DRV3: GPIO16 -&gt; AIN1, GPIO19 -&gt; AIN2, AO1/AO2 -&gt; left3; GPIO24 -&gt; BIN1, GPIO25 -&gt; BIN2, BO1/BO2 -&gt; right3.</text>
+<text x="85" y="1547" font-size="23" text-anchor="start" style="fill:#172c40">DRV3 uses the same VM / GND / STBY arrangement. Submarine mode leaves left3 and right3 off.</text>
+<text x="85" y="1581" font-size="23" text-anchor="start" style="fill:#172c40">Arm signal GPIO27; gripper signal GPIO18. Each servo: +5V and GND direct; only one PWM active at a time.</text>
+<text x="60" y="1631" font-size="23" text-anchor="start" style="fill:#52677b">Camera -&gt; CSI ribbon port. PC -&gt; Ethernet. No motor lead goes to GND. NC pins stay unused. Use one Pi power source.</text>
+</svg>
