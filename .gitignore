@@ -4,6 +4,7 @@ __pycache__/
 *.pt
 captures/
 robot/config.local.json
+robot/config.local.json.*
 .venv-build/
 build/
 dist/

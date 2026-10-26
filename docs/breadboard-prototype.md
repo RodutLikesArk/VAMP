@@ -2,6 +2,8 @@
 
 This guide combines the submarine motors, gimbal servo, HW-123, TCA9548A, AHT10 and MQ-2. Optional crawler and manipulator connections are included. It follows the **default BCM GPIO map** in `robot/config.json`; your ignored `robot/config.local.json` takes precedence if you changed that map. Make connections with all power off.
 
+For your later two-driver assembly wired using the WiringPi-numbered chart, follow the [updated four-motor mapping](submarine-wiringpi-layout.md) for motor inputs. The diagrams below retain the original default motor GPIO assignments.
+
 [Printable two-page A3 PDF](../output/pdf/vamp-breadboard-wiring.pdf) | [Power/motor diagram](breadboard-power-motors.png) | [Breadboard/sensor diagram](breadboard-sensors.png)
 
 ![Power, motors and servo](breadboard-power-motors.png)
