@@ -1,24 +1,56 @@
+from http.client import HTTPConnection, HTTPSConnection
 import json
-from urllib.error import HTTPError
+import threading
+from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
 
 class Client:
     def __init__(self, url, token):
         self.url, self.token = url.rstrip('/'), token
+        parsed = urlsplit(self.url)
+        if parsed.scheme not in ('http', 'https') or not parsed.hostname or parsed.path or parsed.query or parsed.fragment or parsed.username or parsed.password:
+            raise ValueError('Expected an HTTP(S) robot address without a path or credentials')
+        self.host, self.port = parsed.hostname, parsed.port
+        self.connection_type = HTTPSConnection if parsed.scheme == 'https' else HTTPConnection
+        self.connection = None
+        self.request_lock = threading.Lock()
 
     def request(self, path, message=None):
         data = None if message is None else json.dumps(message, allow_nan=False).encode()
-        req = Request(self.url + path, data=data, headers={'Authorization': 'Bearer ' + self.token, 'Content-Type': 'application/json'})
-        try:
-            with urlopen(req, timeout=0.4) as response:
-                return json.load(response)
-        except HTTPError as exc:
+        headers = {'Authorization': 'Bearer ' + self.token, 'Content-Type': 'application/json'}
+        # Reuse one command connection; MJPEG retains its independent stream.
+        # Serializing requests also protects the final stop during shutdown.
+        # Never replay a failed motion command: the caller disarms on failure.
+        with self.request_lock:
             try:
-                reason = json.load(exc).get('error', str(exc))
+                if self.connection is None:
+                    self.connection = self.connection_type(self.host, self.port, timeout=0.4)
+                self.connection.request('GET' if message is None else 'POST', path, body=data, headers=headers)
+                with self.connection.getresponse() as response:
+                    payload = response.read()  # Consume fully before reusing the socket.
+                    status, reason, will_close = response.status, response.reason, response.will_close
+                if will_close:
+                    self.connection.close()
+                    self.connection = None
+                if not 200 <= status < 300:
+                    try:
+                        reason = json.loads(payload).get('error', reason)
+                    except (ValueError, AttributeError):
+                        pass
+                    raise RuntimeError(str(reason))
+                return json.loads(payload)
             except Exception:
-                reason = str(exc)
-            raise RuntimeError(reason) from exc
+                if self.connection is not None:
+                    self.connection.close()
+                    self.connection = None
+                raise
+
+    def close(self):
+        with self.request_lock:
+            if self.connection is not None:
+                self.connection.close()
+                self.connection = None
 
     def video(self):
         req = Request(self.url + '/video.mjpg', headers={'Authorization': 'Bearer ' + self.token})

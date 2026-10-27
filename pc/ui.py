@@ -5,6 +5,7 @@ from pathlib import Path
 
 from .settings import save_settings, data_dir
 from .attitude import AttitudeIndicator
+from . import __version__
 
 BG = '#090f1b'
 PANEL = '#111c2c'
@@ -19,7 +20,7 @@ RED = '#ff657a'
 
 class OperatorView:
     def build_ui(self, root):
-        root.title('V.A.M.P. | Mission Control')
+        root.title('V.A.M.P. | Mission Control v' + __version__)
         root.geometry('1280x880')
         root.minsize(1000, 760)
         root.configure(bg=BG)
@@ -89,7 +90,7 @@ class OperatorView:
         guide = tk.Frame(camera, bg=SURFACE, padx=12, pady=10)
         guide.pack(fill='x', padx=12, pady=(0, 12))
         tk.Label(guide, text='SPACE  +  W A S D', font=('Consolas', 12, 'bold'), bg=SURFACE, fg=ACCENT).pack(side='left')
-        tk.Label(guide, text='Hold to drive • Release SPACE to stop', font=('Segoe UI', 9), bg=SURFACE, fg=MUTED).pack(side='right')
+        tk.Label(guide, textvariable=self.drive_hint, font=('Segoe UI', 9), bg=SURFACE, fg=MUTED).pack(side='right')
         controls = self.panel(body)
         controls.grid(row=0, column=1, sticky='nsew')
         deck = tk.Frame(controls, bg=PANEL, padx=16, pady=16)

@@ -39,6 +39,8 @@ class App(OperatorView):
         self.stabilize = tk.BooleanVar()
         self.light = tk.BooleanVar()
         self.status = tk.StringVar(value='Connecting...')
+        self.drive_hint = tk.StringVar(value='DISARMED · Click ARM SYSTEM')
+        self.last_stop_reason = None
         self.video_status = tk.StringVar(value='Camera connecting...')
         self.servo_positions = dict(gimbal=0.0, arm=0.0, gripper=0.0)
         self.last_status_at = 0.0
@@ -75,14 +77,23 @@ class App(OperatorView):
         # button is clicked. Return it to the driving surface so SPACE does
         # not reopen the dropdown through its native editing bindings.
         self.root.focus_set()
+        self.last_stop_reason = None
         generation = self.invalidate()
         # Always apply current selectors before arm, including on first connection.
         self.jobs.put((generation, '/api/modules', {'mode': self.mode.get(), 'attachment': self.attachment.get()}))
         self.jobs.put((generation, '/api/arm', {}))
 
-    def stop(self, path):
+    def stop(self, path, reason=None):
+        defaults = {'/api/stop': 'Operator stop', '/api/estop': 'Emergency stop',
+                    '/api/reset': 'Emergency stop reset; arm to continue'}
         generation = self.invalidate()
+        self.events.put(('stop_reason', (generation, reason or defaults.get(path, 'Operator stop'))))
         self.jobs.put((generation, path, {}))
+
+    def remember_stop(self, reason):
+        if reason != self.last_stop_reason:
+            self.last_stop_reason = reason
+            logging.warning('Stop reason: %s', reason)
 
     def move_servo(self, name, delta):
         with self.lock:
@@ -141,6 +152,10 @@ class App(OperatorView):
         key = event.keysym.lower()
         with self.lock:
             self.keys.discard(key)
+            if key == 'space':
+                # Stop the next heartbeat immediately, without waiting for the
+                # display refresh. Releasing the hold key never disarms.
+                self.command.update(surge=0, yaw=0, heave=0, pitch=0, stabilize=False)
         if key in self.DRIVE_KEYS and not self.editing_input(event):
             return 'break'
 
@@ -150,7 +165,7 @@ class App(OperatorView):
 
     def check_focus(self):
         if not self.closed.is_set() and not self.has_app_focus():
-            self.stop('/api/stop')
+            self.stop('/api/stop', reason='App lost keyboard focus; re-arm required')
 
     def has_app_focus(self):
         # focus_displayof() resolves the returned Tcl path to a Python widget.
@@ -194,7 +209,7 @@ class App(OperatorView):
                     with self.lock:
                         if generation == self.generation and not status['armed']:
                             self.allowed = False
-                self.events.put(('status', status))
+                self.events.put(('status', (generation, status)))
                 last_error = None
             except Exception as exc:
                 error = (type(exc).__name__, str(exc))
@@ -202,8 +217,8 @@ class App(OperatorView):
                     logging.warning('Robot connection failed', exc_info=True)
                     last_error = error
                 # A failed heartbeat never automatically resumes driving on reconnect.
-                self.invalidate()
-                self.events.put(('error', str(exc)))
+                generation = self.invalidate()
+                self.events.put(('error', (generation, f'{type(exc).__name__}: {exc}')))
                 try:
                     self.client.request('/api/stop', {})
                 except Exception:
@@ -255,7 +270,7 @@ class App(OperatorView):
                         self.display_frame = annotated
                 self.closed.wait(0.2)
         except Exception as exc:
-            self.events.put(('error', 'Defect detection unavailable: ' + str(exc)))
+            self.events.put(('video', 'Defect detection unavailable: ' + str(exc)))
             # Fall back to raw live video; no model download or invented detections.
             self.weights = None
 
@@ -282,11 +297,23 @@ class App(OperatorView):
                             'stabilize': self.stabilize.get() and enabled, 'light': self.light.get()}
         while not self.events.empty():
             kind, data = self.events.get_nowait()
+            if kind in ('status', 'error', 'stop_reason'):
+                event_generation, data = data
+                if event_generation != self.generation:
+                    continue
             if kind == 'status':
                 self.last_status_at = time.monotonic()
                 self.render_status(data)
                 state = 'E-STOP' if data['estopped'] else ('ARMED' if data['armed'] else 'DISARMED')
-                self.status.set('%s · %s / %s · %s%s' % (state, data['mode'], data['attachment'], data.get('reason') or 'Hold SPACE to drive', ' · SIMULATION' if data['simulate'] else ''))
+                reason = data.get('reason')
+                routine = ('Operator stop', 'Modules selected; arm to drive',
+                           'Startup: select modules and arm', 'Emergency stop reset; arm to continue')
+                if not data['armed'] and reason and reason not in routine and self.last_stop_reason is None:
+                    self.remember_stop(reason)
+                line = '%s · %s / %s · %s%s' % (state, data['mode'], data['attachment'], reason or 'Hold SPACE to drive', ' · SIMULATION' if data['simulate'] else '')
+                if self.last_stop_reason:
+                    line += ' | Last stop: ' + self.last_stop_reason
+                self.status.set(line)
                 telemetry = data['telemetry']
                 text = 'Pitch: %s deg | Temperature: %s C | MQ-2 raw digital state: %s\n' % (telemetry['pitch_deg'], telemetry['temperature_c'], telemetry['gas_alarm_raw'])
                 text += 'Motor outputs: ' + str(data['motors']) + '\nServo: ' + str(data['active_servo'])
@@ -297,10 +324,20 @@ class App(OperatorView):
                 self.telemetry.insert('1.0', text)
                 self.telemetry.configure(state='disabled')
             elif kind == 'error':
+                self.remember_stop('Control/connection error: ' + data)
                 self.status.set('Connection: ' + data)
                 self.state_badge.configure(text='●  OFFLINE', fg='#ff657a')
+            elif kind == 'stop_reason':
+                self.remember_stop(data)
             elif kind == 'video':
                 self.video_status.set(data)
+        with self.lock:
+            if not self.allowed:
+                self.drive_hint.set('DISARMED · Click ARM SYSTEM')
+            elif 'space' in self.keys:
+                self.drive_hint.set('SPACE HELD · Release SPACE to stop')
+            else:
+                self.drive_hint.set('SPACE RELEASED · Hold SPACE + direction to drive')
         with self.frame_lock:
             image = self.display_frame.copy() if self.display_frame else None
         if image:
@@ -331,6 +368,8 @@ class App(OperatorView):
             self.client.request('/api/stop', {})
         except Exception:
             pass
+        finally:
+            self.client.close()
 
 
 def main():

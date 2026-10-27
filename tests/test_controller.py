@@ -157,6 +157,7 @@ class NetworkTests(unittest.TestCase):
         self.loop.start()
 
     def tearDown(self):
+        self.client.close()
         self.quit.set()
         self.loop.join(1)
         self.server.shutdown()

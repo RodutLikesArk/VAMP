@@ -67,6 +67,8 @@ SPACE is reserved for the drive hold control across the dashboard, including whe
 
 VAMP-Operator v0.4.2 also returns keyboard focus to the driving surface when ARM is clicked, so SPACE works immediately after selecting a module. For the two-driver WiringPi-chart layout, pull the latest source and rerun `python3 tools/configure_submarine_wiring.py` to apply the corrected crawler profile with two motors per side.
 
+VAMP-Operator v0.4.3 reuses the control connection to reduce repeated connection setup. The drive guide shows SPACE HELD / SPACE RELEASED, and releasing SPACE sends zero propulsion without disarming. Pressing it again resumes only while the robot remains armed. The bottom status line retains the last focus, connection, watchdog or sensor-stop reason until ARM is pressed; it is also logged in `operator.log`. Real focus loss, communication failure, watchdog expiry and emergency stop still require re-arming. The PC update works with the existing Pi service and preserves its 0.6-second default watchdog.
+
 Only one servo PWM signal is enabled at a time. Its signal is detached after 0.3 seconds unless another servo command refreshes it. Detaching PWM does **not** physically cut servo power, and it removes holding torque. Tune pulse limits and release time for your mechanism.
 
 ## Raspberry Pi setup

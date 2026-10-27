@@ -53,11 +53,36 @@ class DesktopTest(unittest.TestCase):
             entry.destroy()
             app.press(SimpleNamespace(keysym='space'))
             app.press(SimpleNamespace(keysym='w'))
-            pump(0.3)
+            pump(1.4)  # Hold beyond two robot-watchdog intervals.
             self.assertEqual(hardware.outputs['left1'], 0.25)
+            self.assertIn('SPACE HELD', app.drive_hint.get())
             app.release(SimpleNamespace(keysym='space'))
+            self.assertEqual(app.command['surge'], 0)
+            self.assertTrue(app.allowed)
             pump(0.3)
             self.assertTrue(all(value == 0 for value in hardware.outputs.values()))
+            self.assertTrue(controller.armed)
+            self.assertIn('SPACE RELEASED', app.drive_hint.get())
+            # Briefly letting go of SPACE stops; re-pressing it resumes only
+            # while the operator remains armed and holds the direction key.
+            for _ in range(3):
+                app.press(SimpleNamespace(keysym='space'))
+                pump(0.2)
+                self.assertEqual(hardware.outputs['left1'], .25)
+                app.release(SimpleNamespace(keysym='space'))
+                pump(0.2)
+                self.assertTrue(controller.armed)
+                self.assertTrue(all(v == 0 for v in hardware.outputs.values()))
+            # A real exchange failure still disarms and never resumes motion
+            # automatically. Keep its cause visible after normal polling returns.
+            with patch.object(app.client, 'request', side_effect=TimeoutError('simulated link timeout')):
+                pump(0.2)
+            pump(0.8)
+            self.assertFalse(controller.armed)
+            self.assertFalse(app.allowed)
+            self.assertIn('TimeoutError: simulated link timeout', app.last_stop_reason)
+            self.assertIn('Last stop:', app.status.get())
+            self.assertNotIn('w', app.keys)
             app.press(SimpleNamespace(keysym='Escape'))
             pump(0.3)
             self.assertTrue(controller.estopped)
@@ -71,6 +96,8 @@ class DesktopTest(unittest.TestCase):
                 app.check_focus()
             pump(0.3)
             self.assertFalse(controller.armed)
+            self.assertIn('lost keyboard focus', app.last_stop_reason)
+            self.assertIn('lost keyboard focus', app.status.get())
             # Exercise the real dropdown callback and HTTP module change.
             def descendants(widget):
                 for child in widget.winfo_children():
@@ -161,8 +188,11 @@ class DesktopTest(unittest.TestCase):
             self.assertFalse(controller.armed)
         finally:
             app.closed.set()
+            app.client.close()
             quit_event.set()
             worker.join(1)
+            for after_id in root.tk.splitlist(root.tk.call('after', 'info')):
+                root.after_cancel(after_id)
             root.destroy()
             server.shutdown()
             server.server_close()
