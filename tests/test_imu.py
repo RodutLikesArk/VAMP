@@ -6,9 +6,11 @@ import struct
 import tempfile
 import time
 import unittest
+from unittest.mock import Mock, patch
 
 from robot.imu import MPU6050
 from robot.hardware import Hardware, validate_config
+from robot.i2c import I2CRouter
 from tools.configure_imu import configure
 from test_controller import CONFIG, Clock
 
@@ -145,3 +147,86 @@ class ImuTests(unittest.TestCase):
         config['motors']['left1'] = [2,6]
         with self.assertRaises(ValueError):
             validate_config(config)
+
+    def test_direct_only_preserves_robot_settings_and_backs_up_mux_setup(self):
+        config = copy.deepcopy(CONFIG)
+        config['token'] = 'private-local-value'
+        config['wiring_confirmed'] = True
+        config['imu'].update(enabled=True, bus=2, mux_channel=0, pitch_sign=-1, pitch_offset_deg=3)
+        config['i2c_mux'].update(enabled=True, bus=2)
+        config['environment']['enabled'] = True
+        config['mq2_digital_pin'] = 4
+        config['temperature_device'] = 'auto'
+        original = json.dumps(config, indent=4).encode()
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder)/'config.local.json'
+            path.write_bytes(original)
+            backup = configure(path, True, 0x68, direct_only=True)
+            saved = json.loads(path.read_text())
+            self.assertEqual(backup.read_bytes(), original)
+            self.assertTrue(saved['imu']['enabled'])
+            self.assertEqual(saved['imu']['bus'], 1)
+            self.assertIsNone(saved['imu']['mux_channel'])
+            self.assertFalse(saved['i2c_mux']['enabled'])
+            self.assertFalse(saved['environment']['enabled'])
+            self.assertIsNone(saved['mq2_digital_pin'])
+            self.assertIsNone(saved['temperature_device'])
+            for key in config.keys() - {'imu','i2c_mux','environment','mq2_digital_pin','temperature_device'}:
+                self.assertEqual(saved[key], config[key], key)
+            for key in config['imu'].keys() - {'enabled','bus','address','mux_channel'}:
+                self.assertEqual(saved['imu'][key], config['imu'][key], key)
+            self.assertIsNone(configure(path, True, 0x68, direct_only=True))
+            self.assertEqual(backup.read_bytes(), original)
+            physical = Mock()
+            router = I2CRouter(saved['i2c_mux'], factory=lambda n: physical)
+            router.route(1, saved['imu']['mux_channel']).read_byte_data(0x68, 0x75)
+            physical.read_byte_data.assert_called_once_with(0x68, 0x75)
+            physical.write_byte.assert_not_called()  # No TCA9548A required.
+            router.close()
+
+    def test_direct_only_invalid_pin_leaves_original_file_untouched(self):
+        config = copy.deepcopy(CONFIG)
+        config['motors']['left1'] = [2, 6]
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder)/'config.local.json'
+            original = json.dumps(config).encode()
+            path.write_bytes(original)
+            with self.assertRaises(ValueError):
+                configure(path, True, direct_only=True)
+            self.assertEqual(path.read_bytes(), original)
+            self.assertEqual(list(Path(folder).iterdir()), [path])
+
+    def test_direct_only_failed_write_keeps_original_and_cleans_temp(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder)/'config.local.json'
+            original = json.dumps(CONFIG).encode()
+            path.write_bytes(original)
+            with patch.object(Path, 'replace', side_effect=OSError('write failed')):
+                with self.assertRaises(OSError):
+                    configure(path, True, direct_only=True)
+            self.assertEqual(path.read_bytes(), original)
+            self.assertEqual(path.with_name(path.name+'.before-direct-imu.bak').read_bytes(), original)
+            self.assertEqual(list(Path(folder).glob('*.tmp')), [])
+
+    def test_direct_only_cannot_be_combined_with_disable(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder)/'config.local.json'
+            path.write_text(json.dumps(CONFIG))
+            with self.assertRaisesRegex(ValueError, 'requires --enable'):
+                configure(path, False, direct_only=True)
+
+    def test_regular_enable_keeps_existing_mux_and_environment_setup(self):
+        config = copy.deepcopy(CONFIG)
+        config['i2c_mux']['enabled'] = True
+        config['imu']['mux_channel'] = 0
+        config['environment']['enabled'] = True
+        config['environment']['mq2']['enabled'] = True
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder)/'config.local.json'
+            path.write_text(json.dumps(config))
+            configure(path, True, 0x68)
+            saved = json.loads(path.read_text())
+        self.assertTrue(saved['imu']['enabled'])
+        self.assertEqual(saved['imu']['mux_channel'], 0)
+        self.assertEqual(saved['i2c_mux'], config['i2c_mux'])
+        self.assertEqual(saved['environment'], config['environment'])

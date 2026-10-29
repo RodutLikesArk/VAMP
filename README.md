@@ -177,7 +177,9 @@ sudo i2cdetect -y 1
 sudo systemctl restart vamp
 ```
 
-Use `--address 0x69` if that is the address shown by i2cdetect. If `/dev/i2c-1` is not yet present after enabling I2C, reboot the Pi and resume these steps. `configure_imu.py` modifies only the existing local IMU settings, preserving motor wiring and the token. It does not automatically enable stabilization. To disable the module, run the same command with `--disable` instead of `--enable`, then restart vamp.
+Use `--address 0x69` if that is the address shown by i2cdetect. If `/dev/i2c-1` is not yet present after enabling I2C, reboot the Pi and resume these steps. The regular `configure_imu.py --enable` command preserves your existing mux/environment setup. It does not automatically enable stabilization. To disable the module, run the same command with `--disable` instead of `--enable`, then restart vamp.
+
+For **just the IMU wired directly to GPIO2/3**, run `.venv/bin/python tools/configure_imu.py --enable --direct-only --address 0x68` with vamp stopped, then restart it. This sets IMU bus 1 and `mux_channel: null`, disables the TCA9548A/environment readers and any legacy MQ-2/temperature readers, and preserves motor wiring, servos, token and IMU calibration. It backs up the original local config once to ignored `robot/config.local.json.before-direct-imu.bak` before applying a validated atomic update. Mux and environment configuration details stay stored for later re-enabling; the original legacy reader settings are retained in the backup. No Windows app update is needed.
 
 Keep the module still for approximately 2 seconds at startup/reconnection. The widget shows calibration progress, then live attitude. Large movement resets calibration. Reads are checked against WHO_AM_I; missing hardware is retried in the background rather than preventing manual control from starting. No sensor data is fabricated when hardware is absent. Simulation reports an explicitly simulated level attitude when its IMU configuration is enabled.
 
