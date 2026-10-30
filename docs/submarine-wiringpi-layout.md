@@ -41,3 +41,26 @@ With the crawler attachment installed, crawler mode drives **two motors per side
 If it fails to start, run `journalctl -u vamp -n 50 --no-pager`. To restore the original local configuration, stop the service, copy the backup over `robot/config.local.json`, then restart. Review the backup's previous GPIO assignments before using it.
 
 Conversion reference: [WiringPi's official pin-to-BCM mapping](https://github.com/WiringPi/WiringPi/blob/master/wiringPi/wiringPi.c).
+
+## Six-motor crawler with DRV3
+
+For your additional driver wired to chart labels **10, 11, 26, 27**, use:
+
+| Additional motor | DRV3 inputs | WiringPi chart labels | BCM values saved | Motor outputs |
+| --- | --- | --- | --- | --- |
+| left3 | AIN1 / AIN2 | 10 / 11 | 8 / 7 | AO1 / AO2 |
+| right3 | BIN1 / BIN2 | 26 / 27 | 12 / 16 | BO1 / BO2 |
+
+The input order above assumes the four wires were connected in AIN1, AIN2, BIN1, BIN2 order. Follow the board's printed labels. Keep SPI disabled: BCM7/8/9/10 are motor control pins in this layout.
+
+Apply the six-motor configuration on the Pi:
+
+```bash
+cd ~/VAMP
+sudo systemctl stop vamp &&
+git pull --ff-only &&
+.venv/bin/python tools/configure_submarine_wiring.py --six-motor-crawler &&
+sudo systemctl restart vamp
+```
+
+This updates the ignored local configuration; pulling Git alone does not change it. It adds left3/right3, includes all six motors in crawler mode, and leaves the submarine profile using only the original four. Other configuration settings, including speed limit, token, IMU and servos, are preserved. The pre-upgrade file is saved once as `robot/config.local.json.before-six-motor-crawler.bak`. A pin conflict aborts before writing. For future configuration updates, keep the `--six-motor-crawler` flag; running the helper without it restores the four-motor preset.

@@ -12,6 +12,41 @@ from test_controller import CONFIG, Clock
 
 
 class SubmarineWiringTests(unittest.TestCase):
+    def test_six_motor_crawler_and_submarine_channel_isolation(self):
+        original = updated_config(CONFIG)
+        original['invert_motors'] = ['left3']
+        config = updated_config(original, six_motor_crawler=True)
+        self.assertEqual(config['motors']['left3'], [8, 7])
+        self.assertEqual(config['motors']['right3'], [12, 16])
+        for key in original.keys() - {'motors', 'profiles'}:
+            self.assertEqual(config[key], original[key], key)
+        hw = Hardware(config, simulate=True)
+        controller = Controller(hw, Clock())
+        controller.configure({'mode': 'crawler', 'attachment': 'none'})
+        controller.arm()
+        controller.command({'surge': 1})
+        controller.tick()
+        self.assertEqual(hw.outputs, {'left1': .5, 'left2': .5, 'right1': .5,
+                                     'right2': .5, 'left3': -.5, 'right3': .5})
+        controller.configure({'mode': 'submarine', 'attachment': 'none'})
+        controller.arm()
+        controller.command({'surge': 1, 'heave': 1})
+        controller.tick()
+        self.assertEqual(hw.outputs['left3'], 0)
+        self.assertEqual(hw.outputs['right3'], 0)
+
+    def test_six_motor_upgrade_preserves_backup_and_is_idempotent(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder)/'config.local.json'
+            original = json.dumps(updated_config(CONFIG)).encode()
+            path.write_bytes(original)
+            backup = configure(path, six_motor_crawler=True)
+            self.assertEqual(backup.read_bytes(), original)
+            self.assertEqual(json.loads(path.read_text())['profiles']['crawler'], {
+                'left': ['left1', 'left2', 'left3'], 'right': ['right1', 'right2', 'right3']})
+            self.assertIsNone(configure(path, six_motor_crawler=True))
+            self.assertEqual(backup.read_bytes(), original)
+
     def test_mapping_preserves_local_settings_and_original_backup(self):
         config = copy.deepcopy(CONFIG)
         config.update(token='private-local-token', wiring_confirmed=True, max_speed=0.3)
